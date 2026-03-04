@@ -36,7 +36,6 @@ export function Statistics({ articles, isDarkMode }: StatisticsProps) {
   const verifiedCount = articles.filter(a => a.category === 'real').length;
   const fakeCount = articles.filter(a => a.category === 'fake').length;
   const misleadingCount = articles.filter(a => a.category === 'misleading').length;
-  const satireCount = articles.filter(a => a.category === 'satire').length;
 
   const highCredibility = articles.filter(a => a.credibilityScore >= 80).length;
   const lowCredibility = articles.filter(a => a.credibilityScore < 50).length;

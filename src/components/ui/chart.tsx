@@ -117,7 +117,6 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey,
-  ...props
 }: Omit<React.ComponentProps<typeof RechartsPrimitive.Tooltip>, "payload"> &
   React.ComponentProps<"div"> & {
     hideLabel?: boolean;
