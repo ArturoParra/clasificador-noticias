@@ -1,53 +1,65 @@
-# React + TypeScript + Vite
+# News Classifier - Analizador de Credibilidad de Noticias 📰
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Una aplicación web moderna diseñada para analizar, clasificar y evaluar la credibilidad de noticias utilizando métricas simuladas de inteligencia artificial. Este proyecto ayuda a los usuarios a navegar por el contenido de noticias con una capa adicional de análisis crítico sobre la veracidad y el sesgo de la información.
 
-Currently, two official plugins are available:
+## ✨ Características Principales
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Feed de Noticias Interactivo**: Exploración fluida de artículos con tarjetas informativas ricas en detalles.
+- **Análisis de IA**: Desglose detallado de factores de credibilidad (positivos, negativos, neutrales) para cada noticia.
+- **Puntuación de Credibilidad**: Sistema visual de puntuación y barras de progreso para evaluar rápidamente la fiabilidad de una fuente.
+- **Insignias de Verificación**: Distintivos visuales para identificar fuentes verificadas o cuestionables.
+- **Búsqueda y Filtrado Avanzado**: Herramientas potentes para buscar por palabras clave, categorías y rangos de fechas.
+- **Panel de Estadísticas**: Visualización de datos y tendencias mediante gráficos interactivos (Recharts).
+- **Gestión de Favoritos**: Funcionalidad para guardar y organizar artículos de interés.
+- **Modo Oscuro/Claro**: Interfaz adaptable a las preferencias del usuario con `next-themes`.
+- **Diseño Responsivo**: Experiencia de usuario optimizada para móviles, tablets y escritorio.
 
-## React Compiler
+## 🛠️ Stack Tecnológico
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+Este proyecto está construido con herramientas modernas de desarrollo web:
 
-Note: This will impact Vite dev & build performances.
+- **Core**: [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Vite](https://vitejs.dev/)
+- **Estilizado**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Componentes UI**: [shadcn/ui](https://ui.shadcn.com/) (basado en Radix UI)
+- **Iconos**: [Lucide React](https://lucide.dev/)
+- **Enrutamiento**: [React Router v7](https://reactrouter.com/)
+- **Gráficos**: [Recharts](https://recharts.org/)
+- **Manejo de Formularios**: [React Hook Form](https://react-hook-form.com/)
+- **Animaciones**: [Motion](https://motion.dev/)
 
-## Expanding the ESLint configuration
+## 🚀 Instalación y Uso
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Sigue estos pasos para ejecutar el proyecto localmente:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. **Clonar el repositorio**
+   ```bash
+   git clone https://github.com/tu-usuario/news-classifier.git
+   cd news-classifier
+   ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+2. **Instalar dependencias**
+   ```bash
+   npm install
+   ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+3. **Iniciar el servidor de desarrollo**
+   ```bash
+   npm run dev
+   ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+4. **Construir para producción**
+   ```bash
+   npm run build
+   ```
 
-```js
+## 📂 Estructura del Proyecto
+
+- `src/components`: Componentes reutilizables de la UI y componentes específicos de la aplicación (NewsCard, AnalysisBreakdown, etc.).
+- `src/context`: Manejo del estado global (NewsContext).
+- `src/data`: Datos simulados (mockNews) para desarrollo y pruebas.
+- `src/styles`: Configuraciones globales de CSS y temas.
+- `src/types`: Definiciones de tipos TypeScript para mantener la seguridad de tipos.
+
 // eslint.config.js
 import reactX from 'eslint-plugin-react-x'
 import reactDom from 'eslint-plugin-react-dom'
