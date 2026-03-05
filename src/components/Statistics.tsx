@@ -142,7 +142,7 @@ export function Statistics({ articles, isDarkMode }: StatisticsProps) {
       <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
         isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'
       }`}>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 ">
           {stats.map((stat, index) => (
             <div
               key={index}
