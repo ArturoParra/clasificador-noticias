@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Shield, CheckCircle, XCircle, AlertTriangle, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { Shield, CheckCircle/* , XCircle */, AlertTriangle, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 import type { NewsArticle } from '../data/mockNews.ts';
 
 interface StatisticsProps {
@@ -34,7 +34,7 @@ export function Statistics({ articles, isDarkMode }: StatisticsProps) {
     : 0;
 
   const verifiedCount = articles.filter(a => a.category === 'real').length;
-  const fakeCount = articles.filter(a => a.category === 'fake').length;
+  /* const fakeCount = articles.filter(a => a.category === 'fake').length; */
   const misleadingCount = articles.filter(a => a.category === 'misleading').length;
 
   const highCredibility = articles.filter(a => a.credibilityScore >= 80).length;
@@ -55,13 +55,13 @@ export function Statistics({ articles, isDarkMode }: StatisticsProps) {
       color: isDarkMode ? 'text-white' : 'text-black',
       bgColor: isDarkMode ? 'bg-gray-900' : 'bg-gray-100',
     },
-    {
+    /* {
       icon: XCircle,
       label: 'Falsas',
       value: fakeCount,
       color: isDarkMode ? 'text-gray-400' : 'text-gray-600',
       bgColor: isDarkMode ? 'bg-gray-900' : 'bg-gray-100',
-    },
+    }, */
     {
       icon: AlertTriangle,
       label: 'Engañosas',
