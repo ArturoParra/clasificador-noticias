@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { TrendingUp, Globe, ChevronRight, Sparkles, ChevronLeft, Plus, X, Trash2, Sun, Moon } from 'lucide-react';
+import { TrendingUp, ChevronRight, Sparkles, ChevronLeft, X, Sun, Moon } from 'lucide-react';
 import { useNews } from '../context/NewsContext';
 
 interface LandingPageProps {
@@ -133,33 +133,6 @@ export function LandingPage({ isDarkMode, onEnterApp, onToggleTheme }: LandingPa
     setNewCarouselName('');
     setSelectedSources([]);
     setSelectedCountries([]);
-  };
-
-  const handleDeleteCarousel = (id: string) => {
-    setCustomCarousels(customCarousels.filter(carousel => carousel.id !== id));
-    const newIndices = { ...carouselIndices };
-    delete newIndices[id];
-    setCarouselIndices(newIndices);
-  };
-
-  const nextCarousel = (id: string) => {
-    const carousel = customCarousels.find(c => c.id === id);
-    if (!carousel) return;
-    const filteredNews = getFilteredNews(carousel);
-    setCarouselIndices(prev => ({
-      ...prev,
-      [id]: ((prev[id] || 0) + 1) % Math.max(1, filteredNews.length)
-    }));
-  };
-
-  const prevCarousel = (id: string) => {
-    const carousel = customCarousels.find(c => c.id === id);
-    if (!carousel) return;
-    const filteredNews = getFilteredNews(carousel);
-    setCarouselIndices(prev => ({
-      ...prev,
-      [id]: ((prev[id] || 0) - 1 + filteredNews.length) % Math.max(1, filteredNews.length)
-    }));
   };
 
   const toggleSource = (source: string) => {

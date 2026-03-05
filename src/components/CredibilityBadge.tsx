@@ -15,7 +15,7 @@ const badgeConfig = {
     textColor: 'text-white',
     borderColor: '',
   },
-  fake: {
+  /* fake: {
     label: 'Falsa',
     icon: ShieldAlert,
     bgColor: 'bg-red-600',
@@ -28,7 +28,7 @@ const badgeConfig = {
     bgColor: 'bg-yellow-500',
     textColor: 'text-black',
     borderColor: '',
-  },
+  }, */
   misleading: {
     label: 'Engañosa',
     icon: AlertTriangle,

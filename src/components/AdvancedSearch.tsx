@@ -54,8 +54,8 @@ const apiCategories = [
 const credibilityCategories: { value: NewsCategory; label: string }[] = [
   { value: 'all', label: 'Todas' },
   { value: 'real', label: 'Verdaderas' },
-  { value: 'fake', label: 'Falsas' },
-  { value: 'satire', label: 'Sátira' },
+  /* { value: 'fake', label: 'Falsas' },
+  { value: 'satire', label: 'Sátira' }, */
   { value: 'misleading', label: 'Engañosas' },
 ];
 

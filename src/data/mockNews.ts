@@ -77,7 +77,7 @@ export const mockNewsData: NewsArticle[] = [
     imageUrl: 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=800&q=80',
     source: 'The Onion Times',
     date: '11 Ene, 2026',
-    category: 'satire',
+    category: 'misleading',
     credibilityScore: 15,
     analysis: [
       {
@@ -113,7 +113,7 @@ export const mockNewsData: NewsArticle[] = [
     imageUrl: 'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=800&q=80',
     source: 'ViralHealth24.net',
     date: '10 Ene, 2026',
-    category: 'fake',
+    category: 'misleading',
     credibilityScore: 8,
     analysis: [
       {
@@ -257,7 +257,7 @@ export const mockNewsData: NewsArticle[] = [
     imageUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&q=80',
     source: 'Satirical News Weekly',
     date: '8 Ene, 2026',
-    category: 'satire',
+    category: 'misleading',
     credibilityScore: 12,
     analysis: [
       {
@@ -293,7 +293,7 @@ export const mockNewsData: NewsArticle[] = [
     imageUrl: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=800&q=80',
     source: 'CryptoScoop.biz',
     date: '7 Ene, 2026',
-    category: 'fake',
+    category: 'misleading',
     credibilityScore: 6,
     analysis: [
       {
