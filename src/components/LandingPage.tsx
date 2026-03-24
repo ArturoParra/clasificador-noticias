@@ -180,14 +180,14 @@ export function LandingPage({ isDarkMode, onEnterApp, onToggleTheme }: LandingPa
               <h1 className={`text-4xl sm:text-5xl lg:text-6xl font-bold transition-colors duration-300 ${
                 isDarkMode ? 'text-white' : 'text-black'
               }`}>
-                Noticias Verificadas
+                TruthScore Noticias
               </h1>
               <Sparkles className={`size-6 ${isDarkMode ? 'text-white' : 'text-black'}`} />
             </div>
             <p className={`text-lg sm:text-xl max-w-2xl mx-auto transition-colors duration-300 ${
               isDarkMode ? 'text-gray-400' : 'text-gray-600'
             }`}>
-              IA que analiza y califica la credibilidad de noticias en tiempo real
+              Análisis de credibilidad de noticias con IA
             </p>
           </div>
 
