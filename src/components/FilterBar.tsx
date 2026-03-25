@@ -8,8 +8,8 @@ interface FilterBarProps {
 const categories: { value: NewsCategory; label: string }[] = [
   { value: 'all', label: 'Todas las Noticias' },
   { value: 'real', label: 'Verdaderas' },
-  /* { value: 'fake', label: 'Falsas' },
-  { value: 'satire', label: 'Sátira' }, */
+   { value: 'fake', label: 'Falsas' },
+  /*{ value: 'satire', label: 'Sátira' }, */
   { value: 'misleading', label: 'Engañosas' },
 ];
 
