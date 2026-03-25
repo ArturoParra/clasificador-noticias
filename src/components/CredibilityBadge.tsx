@@ -15,20 +15,13 @@ const badgeConfig = {
     textColor: 'text-white',
     borderColor: '',
   },
-  /* fake: {
+  fake: {
     label: 'Falsa',
-    icon: ShieldAlert,
+    icon: AlertTriangle,
     bgColor: 'bg-red-600',
     textColor: 'text-white',
-    borderColor: 'border-2 border-red-400',
-  },
-  satire: {
-    label: 'Sátira',
-    icon: Laugh,
-    bgColor: 'bg-yellow-500',
-    textColor: 'text-black',
     borderColor: '',
-  }, */
+  },
   misleading: {
     label: 'Engañosa',
     icon: AlertTriangle,
