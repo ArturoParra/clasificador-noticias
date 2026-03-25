@@ -20,342 +20,321 @@ export interface NewsArticle {
   analysis: AnalysisFactor[];
 }
 
-const generateMockContent = (title: string) => {
-  return `
-    <p class="mb-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-    <p class="mb-4">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-    <h3 class="text-xl font-bold mb-2 mt-6">Detalles del Reporte</h3>
-    <p class="mb-4">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
-    <p class="mb-4">Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.</p>
-    <blockquote class="border-l-4 border-gray-300 pl-4 italic my-6">"Esta es una cita importante relacionada con la noticia sobre ${title} que añade contexto y credibilidad a la narración."</blockquote>
-    <p class="mb-4">At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.</p>
-  `;
-};
+// Análisis estándar para noticias reales (medios verificados)
+const defaultRealNewsAnalysis: AnalysisFactor[] = [
+  {
+    factor: 'Verificación de Fuente',
+    score: 95,
+    status: 'positive',
+    description: 'Medio de comunicación establecido y reconocido con proceso editorial.'
+  },
+  {
+    factor: 'Precisión Factual',
+    score: 92,
+    status: 'positive',
+    description: 'Información y eventos reportados de manera consistente con otros medios.'
+  },
+  {
+    factor: 'Credibilidad del Autor',
+    score: 90,
+    status: 'positive',
+    description: 'Publicado por periodistas o autores validados del medio.'
+  },
+  {
+    factor: 'Detección de Sesgo',
+    score: 85,
+    status: 'neutral',
+    description: 'El contenido presenta el encuadre editorial y de opinión esperado para su formato.'
+  }
+];
 
 export const mockNewsData: NewsArticle[] = [
+    {
+    id: '405638016',
+    title: 'Límites al poder',
+    description: 'La estrategia de seguridad del Gobierno federal y la resiliencia de la ciudadanía fueron puestas a prueba ayer...',
+    imageUrl: 'https://www.gruporeforma.com/opinion/Autor/Sharing/1610_perfilNRM.jpg?ts=20260223084917',
+    source: 'El Norte',
+    date: '23 Feb, 2026',
+    category: 'real',
+    credibilityScore: 91,
+    content: '<p class="mb-4">La estrategia de seguridad del Gobierno federal y la resiliencia de la ciudadanía fueron puestas a prueba ayer. La realidad volvió a recordarnos que el combate a la inseguridad, el mantenimiento del Estado de Derecho y la capacidad real de los Gobiernos de gobernar son la piedra angular...</p>',
+    analysis: defaultRealNewsAnalysis
+  },
   {
-    id: '1',
-    title: 'Científicos Descubren Nuevo Tratamiento para Enfermedad Común',
-    content: generateMockContent('Científicos Descubren Nuevo Tratamiento'),
-    description: 'Investigadores de universidades líderes han publicado hallazgos revisados por pares sobre un tratamiento innovador que muestra resultados prometedores en ensayos clínicos.',
-    imageUrl: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=800&q=80',
-    source: 'Science Daily',
-    date: '12 Ene, 2026',
+    id: '405638012',
+    title: 'Realidad regia',
+    description: 'Ves jugar a las Chivas, aunque hayan perdido contra Cruz Azul, y te das cuenta de que Tigres y Rayados, por ahora, no tienen nada qué hacer en este torneo...',
+    imageUrl: 'https://www.gruporeforma.com/opinion/Editorial/Sharing/83_perfilNRM.jpg?ts=20260223084618',
+    source: 'El Norte',
+    date: '23 Feb, 2026',
+    category: 'fake',
+    credibilityScore: 55,
+    content: '<p class="mb-4">Ves jugar a las Chivas, aunque hayan perdido contra Cruz Azul, y te das cuenta de que Tigres y Rayados, por ahora, no tienen nada qué hacer en este torneo. Lo mismo al ver a La Máquina y Toluca. Es justo que los clubes regios estén en octavo y noveno lugar. Todos los que están...</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405611898',
+    title: 'Cabeza de la hidra',
+    description: '"Esta serpiente parecía destinada a la eternidad... A la última cabeza, que era inmortal, Hércules la enterró bajo una gran piedra..."',
+    imageUrl: 'https://www.gruporeforma.com/opinion/Autor/Sharing/548_perfilNRM.jpg?ts=20260223072719',
+    source: 'Reforma',
+    date: '23 Feb, 2026',
+    category: 'fake',
+    credibilityScore: 35,
+    content: '<p class="mb-4">"Esta serpiente parecía destinada a la eternidad... A la última cabeza, que era inmortal, Hércules la enterró bajo una gran piedra, y donde la enterraron estará ahora, odiando y soñando". Jorge Luis Borges La muerte de Nemesio Oseguera, El Mencho, es...</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405611896',
+    title: 'La batalla impostergable',
+    description: 'La muerte de la cabeza de la organización criminal más poderosa de México deja constancia de la determinación de la presidenta Sheinbaum...',
+    imageUrl: 'https://www.gruporeforma.com/opinion/Autor/Sharing/492_perfilNRM.jpg?ts=20260223072719',
+    source: 'Reforma',
+    date: '23 Feb, 2026',
+    category: 'misleading',
+    credibilityScore: 73,
+    content: '<p class="mb-4">La muerte de la cabeza de la organización criminal más poderosa de México deja constancia de la determinación de la presidenta Sheinbaum de poner fin a los apapachos que su antecesor ofrecía a los criminales. En la demagogia del populista, los criminales eran víctimas de un modelo económico. Los...</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405611892',
+    title: 'Pisar mercurio',
+    description: 'Hay que decirlo sin mezquindad: la caída de Nemesio Oseguera Cervantes, El Mencho, es un golpe mayor...',
+    imageUrl: 'https://www.gruporeforma.com/opinion/Autor/Sharing/463_perfilNRM.jpg?ts=20260223072502',
+    source: 'Reforma',
+    date: '23 Feb, 2026',
     category: 'real',
     credibilityScore: 92,
-    analysis: [
-      {
-        factor: 'Verificación de Fuente',
-        score: 95,
-        status: 'positive',
-        description: 'Publicado por revista científica de renombre con proceso de revisión por pares.'
-      },
-      {
-        factor: 'Precisión Factual',
-        score: 93,
-        status: 'positive',
-        description: 'Las afirmaciones están respaldadas por datos verificables y múltiples fuentes independientes.'
-      },
-      {
-        factor: 'Credibilidad del Autor',
-        score: 90,
-        status: 'positive',
-        description: 'Los autores tienen credenciales establecidas en el campo con historial de investigación publicada.'
-      },
-      {
-        factor: 'Detección de Sesgo',
-        score: 88,
-        status: 'positive',
-        description: 'Sesgo mínimo detectado. Presenta perspectiva equilibrada con conclusiones basadas en datos.'
-      }
-    ]
+    content: '<p class="mb-4">Hay que decirlo sin mezquindad: la caída de Nemesio Oseguera Cervantes, El Mencho, es un golpe mayor. Un trofeo que el Estado mexicano llevaba años persiguiendo. Un mensaje -hacia adentro y hacia afuera- de que la era de "abrazos, no balazos" ya no alcanza para administrar un país capturado por...</p>',
+    analysis: defaultRealNewsAnalysis
   },
   {
-    id: '2',
-    title: 'Alcalde Local Anuncia Santuario Alienígena de un Millón de Dólares',
-    description: 'En lo que parece ser una pieza satírica, el alcalde supuestamente planea construir una instalación para dar la bienvenida a visitantes extraterrestres con dinero de contribuyentes.',
-    imageUrl: 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=800&q=80',
-    source: 'The Onion Times',
-    date: '11 Ene, 2026',
-    category: 'misleading',
-    credibilityScore: 15,
-    analysis: [
-      {
-        factor: 'Verificación de Fuente',
-        score: 20,
-        status: 'neutral',
-        description: 'Publicación satírica conocida. El contenido es intencionalmente fabricado para humor.'
-      },
-      {
-        factor: 'Precisión Factual',
-        score: 5,
-        status: 'negative',
-        description: 'La historia es completamente fabricada sin base en la realidad.'
-      },
-      {
-        factor: 'Marcadores Satíricos',
-        score: 95,
-        status: 'positive',
-        description: 'Indicadores claros de sátira incluyendo afirmaciones absurdas y tono humorístico.'
-      },
-      {
-        factor: 'Análisis de Intención',
-        score: 90,
-        status: 'neutral',
-        description: 'El propósito es entretenimiento y comentario social, no engañar.'
-      }
-    ]
+    id: '405611890',
+    title: 'La educación como impulso para la prosperidad nacional',
+    description: 'Las instituciones educativas tenemos una responsabilidad permanente: formar a personas en entornos diversos, dinámicos e inciertos...',
+    imageUrl: 'https://www.gruporeforma.com/opinion/Autor/Sharing/1818_perfilNRM.jpg?ts=20260223072503',
+    source: 'Reforma',
+    date: '23 Feb, 2026',
+    category: 'real',
+    credibilityScore: 90,
+    content: '<p class="mb-4">Las instituciones educativas tenemos una responsabilidad permanente: formar a personas en entornos diversos, dinámicos e inciertos, buscando que tengan un impacto positivo en la sociedad. En años recientes hemos visto la coincidencia de muchos retos que no sólo han modificado el mundo laboral y...</p>',
+    analysis: defaultRealNewsAnalysis
   },
   {
-    id: '3',
-    title: 'Cura Milagrosa: ¡Bebe Esto para Perder 25 Kilos en Una Semana!',
-    description: 'Influencer de redes sociales afirma que esta bebida secreta ayudó a miles a perder peso instantáneamente. Los doctores supuestamente están sorprendidos por este descubrimiento.',
-    imageUrl: 'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=800&q=80',
-    source: 'ViralHealth24.net',
-    date: '10 Ene, 2026',
-    category: 'misleading',
-    credibilityScore: 8,
-    analysis: [
-      {
-        factor: 'Verificación de Fuente',
-        score: 10,
-        status: 'negative',
-        description: 'El sitio web no tiene respaldo creíble ni proceso de verificación para afirmaciones.'
-      },
-      {
-        factor: 'Precisión Factual',
-        score: 5,
-        status: 'negative',
-        description: 'Las afirmaciones contradicen la ciencia médica establecida. Sin evidencia revisada por pares.'
-      },
-      {
-        factor: 'Detección de Clickbait',
-        score: 98,
-        status: 'negative',
-        description: 'Usa frases típicas de clickbait como "doctores sorprendidos" y "cura milagrosa".'
-      },
-      {
-        factor: 'Desinformación Médica',
-        score: 95,
-        status: 'negative',
-        description: 'Hace afirmaciones de salud peligrosas sin respaldo científico.'
-      }
-    ]
+    id: '405611888',
+    title: 'Tapalpa',
+    description: 'Es un golpe que mira hacia atrás y abre grietas hacia adelante. Es, en el presente, la acción gubernamental de seguridad más importante...',
+    imageUrl: 'https://www.gruporeforma.com/opinion/Autor/Sharing/541_perfilNRM.jpg?ts=20260223072507',
+    source: 'Reforma',
+    date: '23 Feb, 2026',
+    category: 'real',
+    credibilityScore: 89,
+    content: '<p class="mb-4">Es un golpe que mira hacia atrás y abre grietas hacia adelante. Es, en el presente, la acción gubernamental de seguridad más importante. Un golpe de autoridad política. El operativo militar para la captura de El Mencho que terminó en su muerte se une al collar de decisiones de distinto nivel que...</p>',
+    analysis: defaultRealNewsAnalysis
   },
   {
-    id: '4',
-    title: 'Estudio Muestra Posible Vínculo Entre Dieta y Calidad del Sueño',
-    description: 'Un estudio preliminar sugiere que puede haber una conexión entre ciertos patrones dietéticos y la calidad del sueño, aunque los investigadores instan a más investigación.',
-    imageUrl: 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?w=800&q=80',
-    source: 'Health News Network',
-    date: '13 Ene, 2026',
-    category: 'misleading',
-    credibilityScore: 58,
-    analysis: [
-      {
-        factor: 'Verificación de Fuente',
-        score: 65,
-        status: 'neutral',
-        description: 'La fuente es legítima pero el estudio presenta afirmaciones con contexto limitado.'
-      },
-      {
-        factor: 'Estado de Investigación',
-        score: 50,
-        status: 'neutral',
-        description: 'Hallazgos preliminares presentados como más concluyentes de lo que son.'
-      },
-      {
-        factor: 'Evaluación de Afirmaciones',
-        score: 60,
-        status: 'neutral',
-        description: 'Las afirmaciones omiten advertencias importantes sobre evidencia limitada.'
-      },
-      {
-        factor: 'Detección de Sesgo',
-        score: 55,
-        status: 'negative',
-        description: 'Presenta datos preliminares sin el contexto completo de limitaciones del estudio.'
-      }
-    ]
+    id: '405607928',
+    title: 'La educación como impulso para la prosperidad nacional',
+    description: 'Las instituciones educativas tenemos una responsabilidad permanente: formar a personas en entornos diversos, dinámicos e inciertos...',
+    imageUrl: 'https://www.gruporeforma.com/opinion/Autor/Sharing/1818_perfilNRM.jpg?ts=20260223071447',
+    source: 'El Norte',
+    date: '23 Feb, 2026',
+    category: 'real',
+    credibilityScore: 90,
+    content: '<p class="mb-4">Las instituciones educativas tenemos una responsabilidad permanente: formar a personas en entornos diversos, dinámicos e inciertos, buscando que tengan un impacto positivo en la sociedad. En años recientes hemos visto la coincidencia de muchos retos que no sólo han modificado el mundo laboral y...</p>',
+    analysis: defaultRealNewsAnalysis
   },
   {
-    id: '5',
-    title: 'Economía Muestra Fuerte Crecimiento en Último Trimestre',
-    description: 'Datos oficiales del gobierno muestran robusta expansión económica, aunque economistas independientes notan métricas seleccionadas que omiten preocupantes datos de inflación.',
-    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80',
-    source: 'Economic Times',
-    date: '9 Ene, 2026',
-    category: 'misleading',
-    credibilityScore: 42,
-    analysis: [
-      {
-        factor: 'Verificación de Fuente',
-        score: 75,
-        status: 'positive',
-        description: 'Fuente de noticias legítima citando datos oficiales.'
-      },
-      {
-        factor: 'Integridad del Contexto',
-        score: 30,
-        status: 'negative',
-        description: 'Omite contexto importante sobre inflación y crecimiento de salarios reales.'
-      },
-      {
-        factor: 'Selección de Datos',
-        score: 35,
-        status: 'negative',
-        description: 'Presenta selectivamente métricas favorables mientras ignora datos contradictorios.'
-      },
-      {
-        factor: 'Detección de Sesgo',
-        score: 40,
-        status: 'negative',
-        description: 'Muestra claro sesgo en el encuadre. Carece de perspectiva equilibrada de expertos.'
-      }
-    ]
+    id: '405592674',
+    title: 'Entre asombro y la conciencia de lo no perfecto se encuentran mis opciones y la realidad',
+    description: '¿Te has puesto a contemplar lo que te asombra en la vida? Esta mañana pensé que la vida es muy grande. Al decirlo me salieron lágrimas...',
+    imageUrl: 'https://vanguardia.com.mx/binrepository/1200x675/0c0/0d0/down-right/11604/ECEV/diseno-sin-titulo-11_1-14563997_20260222224047.jpg',
+    source: 'Vanguardia',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 85,
+    content: '<p class="mb-4">¿Te has puesto a contemplar lo que te asombra en la vida? Esta mañana pensé que la vida es muy grande. Al decirlo me salieron lágrimas. ¿Qué sentí? ¿Por qué las lágrimas? ¿Qué es lo que sentimos en esos momentos? No es miedo, ni ira, ni dolor... ¿Entonces? Logré nombrar compasión y ternura, alegría muy profunda. Cuestioné el merecimiento, mi merecimiento. No considero que exista alguna razón por la que yo merecería la grandeza de la vida que no sea la sola habilidad de contemplarla.</p>',
+    analysis: defaultRealNewsAnalysis
   },
   {
-    id: '6',
-    title: 'Empresa Tecnológica Anuncia Importantes Actualizaciones de Política de Privacidad',
-    description: 'Empresa líder de tecnología publica revisiones integrales de política de privacidad siguiendo requisitos de cumplimiento regulatorio y comentarios de usuarios.',
-    imageUrl: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&q=80',
-    source: 'TechNews Pro',
-    date: '14 Ene, 2026',
+    id: '405561206',
+    title: 'Morena: referente inmoral de la sociedad',
+    description: 'Durante el gobierno de López Obrador se especulaba que, probablemente, cuando dejara la presidencia brotarían varios conflictos dentro de Morena...',
+    imageUrl: 'https://etcetera.com.mx/wp-content/uploads/2026/02/440ac1674f87cec10b829bce70fac432.jpg',
+    source: 'Etcétera',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 87,
+    content: '<p class="mb-4">Durante el gobierno de López Obrador se especulaba que, probablemente, cuando dejara la presidencia brotarían varios conflictos dentro de Morena, pues por más influencia política que conservara desde Palenque le sería difícil evitar esas confrontaciones y rivalidades.</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405561200',
+    title: '¿México necesita a un Bukele?',
+    description: '¿México necesita a un Bukele? La sola pregunta revela el tamaño de la frustración y decepción nacional frente a la inseguridad, la corrupción...',
+    imageUrl: 'https://etcetera.com.mx/wp-content/uploads/2026/02/descarga-13.webp',
+    source: 'Etcétera',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 86,
+    content: '<p class="mb-4">¿México necesita a un Bukele? La sola pregunta revela el tamaño de la frustración y decepción nacional frente a la inseguridad, la corrupción y la incompetencia institucional acumuladas por décadas.</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405542316',
+    title: 'Se reporta llegada de restos de \'El Mencho\' a la FEMDO',
+    description: 'Los restos del capo Nemesio Oseguera Cervantes, alias \'El Mencho\', abatido este domingo en la Sierra de Jalisco, se encuentran en la FEMDO...',
+    imageUrl: 'https://img.gruporeforma.com/imagenes/960x640/7/131/6130631.jpg',
+    source: 'El Norte',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 94,
+    content: '<p class="mb-4">Los restos del capo Nemesio Oseguera Cervantes, alias \'El Mencho\', abatido este domingo en la Sierra de Jalisco, se encuentran en la Fiscalía Especializada en materia de Delincuencia Organizada (FEMDO), en la Ciudad de México, de acuerdo con los primeros reportes.</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405513414',
+    title: 'Muere \'El Mencho\' camino a CDMX tras operativo en Jalisco',
+    description: 'Nemesio Oseguera Cervantes, "El Mencho", fue detenido en Tapalpa, Jalisco, donde fue herido durante un operativo federal desplegado...',
+    imageUrl: 'https://img.gruporeforma.com/imagenes/960x640/7/131/6130528.jpg',
+    source: 'Reforma',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 95,
+    content: '<p class="mb-4">Nemesio Oseguera Cervantes, "El Mencho", fue detenido en Tapalpa, Jalisco, donde fue herido durante un operativo federal desplegado, y perdió la vida en camino a la Ciudad de México, confirmó la Secretaría de la Defensa Nacional.</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405472342',
+    title: 'Analizan pobreza en municipios mineros del estado',
+    description: 'Actividad extractiva no se traduce en desarrollo económico, revela estudio...',
+    imageUrl: 'https://diario.mx/core/dmx/assets/images/2026/02/22/20211007120032-0-1849121-pk4w7xx8a-rJtLPHnC8.jpg',
+    source: 'El Diario de Juárez',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 93,
+    content: '<p class="mb-4">Ciudad Juárez.- Localidades mineras de la entidad, como Guadalupe y Calvo y Guazapares, son muestra de que dicha actividad extractiva no se traduce en desarrollo económico ni bienestar para las comunidades.</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405472332',
+    title: 'Recibió Chihuahua más fondos del Repuve',
+    description: 'Superó a Tamaulipas y Baja California...',
+    imageUrl: 'https://diario.mx/core/dmx/assets/images/2026/02/22/untitled-1-hsho0wo4n-Ll7vlHMdI.jpg',
+    source: 'El Diario de Juárez',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 93,
+    content: '<p class="mb-4">Ciudad Juárez.- Un análisis del Legislativo federal muestra que Chihuahua fue el estado que mayor cantidad de recursos recibió para pavimentación derivados de la regularización de vehículos de procedencia extranjera.</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405460070',
+    title: 'Venderán como chatarra 60 camiones de PASA',
+    description: 'De 92 unidades, sólo cuatro son usadas por la Dirección de Limpia; otras fueron donadas...',
+    imageUrl: 'https://diario.mx/core/dmx/assets/images/2026/02/22/9-bkSk6mdZr.jpg',
+    source: 'El Diario de Juárez',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 90,
+    content: '<p class="mb-4">Ciudad Juárez.- De los 92 camiones recolectores de basura que la empresa PASA cedió al Municipio al término de su contrato en 2023, la mayoría se rematará como chatarra, dio a conocer la directora de Patrimonio Municipal, Jessica Karina Espino López.</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405460064',
+    title: 'Será el martes elección en el Campestre',
+    description: 'Entre pugna legal, el club emitió una segunda convocatoria con fecha para votar por nuevo Consejo de Directores...',
+    imageUrl: 'https://diario.mx/core/dmx/assets/images/2026/02/22/untitled-1-izT6id3Jd.jpg',
+    source: 'El Diario de Juárez',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 89,
+    content: '<p class="mb-4">Ciudad Juárez.- En medio de la pugna legal por la renovación de la dirigencia, el Club Campestre de Ciudad Juárez emitió una segunda convocatoria que ya establece formalmente la fecha para la elección del nuevo Consejo de Directores.</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405452588',
+    title: 'Abaten a Nemesio Oseguera Cervantes, “El Mencho”',
+    description: 'El líder del Cártel de Jalisco Nueva Generación (CJNG), Nemesio Oseguera Cervantes, alias “El Mencho”, fue abatido el domingo 22 de febrero...',
+    imageUrl: 'https://8columnas.com.mx/wp-content/uploads/2024/01/8Columnas-Home_bl.png',
+    source: 'Ocho Columnas',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 93,
+    content: '<p class="mb-4">El líder del Cártel de Jalisco Nueva Generación (CJNG), Nemesio Oseguera Cervantes, alias “El Mencho”, fue abatido el domingo 22 de febrero durante un operativo encabezado por fuerzas federales en el municipio de Tapalpa, Jalisco, confirmaron fuentes del Gobierno de México.</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405452586',
+    title: 'San Mateo Atenco inaugura rehabilitación de avenida Benito Juárez',
+    description: 'La presidenta municipal de San Mateo Atenco, Ana Muñiz Neyra, encabezó la inauguración de la rehabilitación de la avenida Benito Juárez García...',
+    imageUrl: 'https://8columnas.com.mx/wp-content/uploads/2024/01/8Columnas-Home_bl.png',
+    source: 'Ocho Columnas',
+    date: '22 Feb, 2026',
     category: 'real',
     credibilityScore: 88,
-    analysis: [
-      {
-        factor: 'Verificación de Fuente',
-        score: 90,
-        status: 'positive',
-        description: 'Medio establecido de periodismo tecnológico con fuertes estándares editoriales.'
-      },
-      {
-        factor: 'Precisión Factual',
-        score: 92,
-        status: 'positive',
-        description: 'Información verificada a través de declaraciones oficiales de la empresa y documentos.'
-      },
-      {
-        factor: 'Múltiples Fuentes',
-        score: 85,
-        status: 'positive',
-        description: 'Corroborado por múltiples medios de noticias tecnológicas independientes.'
-      },
-      {
-        factor: 'Transparencia',
-        score: 86,
-        status: 'positive',
-        description: 'Atribución clara y enlaces a fuentes primarias proporcionados.'
-      }
-    ]
+    content: '<p class="mb-4">La presidenta municipal de San Mateo Atenco, Ana Muñiz Neyra, encabezó la inauguración de la rehabilitación de la avenida Benito Juárez García, luego de concluir las primeras dos etapas de pavimentación con concreto hidráulico en la principal vía de acceso del municipio.</p>',
+    analysis: defaultRealNewsAnalysis
   },
   {
-    id: '7',
-    title: 'Gato Local Elegido como Alcalde del Pueblo en Victoria Aplastante',
-    description: 'En una visión satírica humorística sobre política, un pequeño pueblo supuestamente elige a un felino como su nuevo alcalde después de que los ciudadanos se cansan de candidatos tradicionales.',
-    imageUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&q=80',
-    source: 'Satirical News Weekly',
-    date: '8 Ene, 2026',
-    category: 'misleading',
-    credibilityScore: 12,
-    analysis: [
-      {
-        factor: 'Verificación de Fuente',
-        score: 15,
-        status: 'neutral',
-        description: 'Publicación satírica claramente etiquetada con descargo de responsabilidad.'
-      },
-      {
-        factor: 'Indicadores de Absurdo',
-        score: 98,
-        status: 'positive',
-        description: 'La historia contiene elementos absurdos obvios indicando intención satírica.'
-      },
-      {
-        factor: 'Precisión Factual',
-        score: 0,
-        status: 'negative',
-        description: 'Historia completamente fabricada sin base factual.'
-      },
-      {
-        factor: 'Propósito Satírico',
-        score: 95,
-        status: 'neutral',
-        description: 'Claro comentario social sobre insatisfacción política.'
-      }
-    ]
+    id: '405452584',
+    title: 'UAEMéx destaca saber indígena y “milpas educativas” en Día de la Lengua Materna',
+    description: 'En el marco del Día Internacional de la Lengua Materna, la Facultad de Ciencias de la Conducta de la Universidad Autónoma del Estado de México...',
+    imageUrl: 'https://8columnas.com.mx/wp-content/uploads/2024/01/8Columnas-Home_bl.png',
+    source: 'Ocho Columnas',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 91,
+    content: '<p class="mb-4">En el marco del Día Internacional de la Lengua Materna, la Facultad de Ciencias de la Conducta de la Universidad Autónoma del Estado de México (UAEMéx) realizó la conferencia “El conocimiento indígena para la educación escolar: Aportes desde las ‘Milpas educativas’ para el buen vivir”.</p>',
+    analysis: defaultRealNewsAnalysis
   },
   {
-    id: '8',
-    title: 'Celebridad Respalda Esquema de Criptomonedas Prometiendo 1000% de Retornos',
-    description: 'Publicación en redes sociales muestra a celebridad supuestamente garantizando retornos masivos en nueva inversión de criptomonedas, prometiendo que seguidores se harán ricos rápidamente.',
-    imageUrl: 'https://images.unsplash.com/photo-1621416894569-0f39ed31d247?w=800&q=80',
-    source: 'CryptoScoop.biz',
-    date: '7 Ene, 2026',
-    category: 'misleading',
-    credibilityScore: 6,
-    analysis: [
-      {
-        factor: 'Verificación de Fuente',
-        score: 5,
-        status: 'negative',
-        description: 'Sitio web no verificado sin supervisión editorial o verificación de hechos.'
-      },
-      {
-        factor: 'Indicadores de Estafa',
-        score: 99,
-        status: 'negative',
-        description: 'Esquema clásico de pump-and-dump con promesas de retornos irrealistas.'
-      },
-      {
-        factor: 'Autenticidad de Imagen',
-        score: 10,
-        status: 'negative',
-        description: 'El análisis de IA sugiere que las imágenes pueden estar manipuladas o ser deepfakes.'
-      },
-      {
-        factor: 'Riesgo Financiero',
-        score: 100,
-        status: 'negative',
-        description: 'Riesgo extremadamente alto de fraude financiero y pérdida.'
-      }
-    ]
+    id: '405452582',
+    title: 'CODHEM intensifica recorridos para proteger derechos de personas migrantes',
+    description: 'En lo que va de 2026, la Comisión de Derechos Humanos del Estado de México (CODHEM) ha llevado a cabo 12 recorridos en distintos municipios...',
+    imageUrl: 'https://8columnas.com.mx/wp-content/uploads/2024/01/8Columnas-Home_bl.png',
+    source: 'Ocho Columnas',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 92,
+    content: '<p class="mb-4">En lo que va de 2026, la Comisión de Derechos Humanos del Estado de México (CODHEM) ha llevado a cabo 12 recorridos en distintos municipios con presencia de población en movilidad, con el propósito de brindar asesoría e informar sobre sus derechos.</p>',
+    analysis: defaultRealNewsAnalysis
   },
   {
-    id: '9',
-    title: 'Nuevo Descubrimiento Arqueológico Puede Reescribir Historia Antigua',
-    description: 'Equipo de excavación afirma haber encontrado artefactos que podrían cambiar nuestra comprensión de civilizaciones antiguas, aunque expertos están esperando resultados de datación por carbono.',
-    imageUrl: 'https://images.unsplash.com/photo-1567427018141-0584cfcbf1b8?w=800&q=80',
-    source: 'Archaeology Today',
-    date: '6 Ene, 2026',
-    category: 'misleading',
-    credibilityScore: 62,
-    analysis: [
-      {
-        factor: 'Credibilidad de Fuente',
-        score: 70,
-        status: 'positive',
-        description: 'Publicación de arqueología de renombre pero con afirmaciones sensacionalistas.'
-      },
-      {
-        factor: 'Verificación de Expertos',
-        score: 55,
-        status: 'neutral',
-        description: 'Afirmaciones aún no verificadas por expertos arqueológicos independientes.'
-      },
-      {
-        factor: 'Integridad del Contexto',
-        score: 48,
-        status: 'negative',
-        description: 'Presenta hallazgos preliminares de manera más concluyente de lo justificado.'
-      },
-      {
-        factor: 'Detección de Sesgo',
-        score: 58,
-        status: 'negative',
-        description: 'Titular exagerado que no refleja la naturaleza preliminar de los hallazgos.'
-      }
-    ]
+    id: '405452580',
+    title: 'Toluca despliega 400 elementos por peregrinación al Tepeyac',
+    description: 'El Gobierno de Toluca implementará un operativo integrado por 400 elementos para acompañar a los contingentes que avanzarán hacia la Basílica de Guadalupe...',
+    imageUrl: 'https://8columnas.com.mx/wp-content/uploads/2026/02/Toluca-despliega-400-elementos-por-peregrinacion-al-Tepeyac.jpg',
+    source: 'Ocho Columnas',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 90,
+    content: '<p class="mb-4">El Gobierno de Toluca implementará un operativo integrado por 400 elementos para acompañar a los contingentes que avanzarán hacia la Basílica de Guadalupe con motivo de la Peregrinación al Tepeyac.</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405452578',
+    title: 'Ecatepec refuerza recolección nocturna gratuita de basura',
+    description: 'El Gobierno de Ecatepec fortaleció el programa de recolección nocturna gratuita de basura en zonas altas del municipio...',
+    imageUrl: 'https://8columnas.com.mx/wp-content/uploads/2026/02/Ecatepec-refuerza-recoleccion-nocturna-gratuita-de-basura.jpg',
+    source: 'Ocho Columnas',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 89,
+    content: '<p class="mb-4">El Gobierno de Ecatepec fortaleció el programa de recolección nocturna gratuita de basura en zonas altas del municipio, con el objetivo de prevenir inundaciones y recuperar el espacio público. La alcaldesa Azucena Cisneros Coss supervisó el servicio en la Sierra de Guadalupe.</p>',
+    analysis: defaultRealNewsAnalysis
+  },
+  {
+    id: '405452574',
+    title: 'Somos México avanza rumbo a su registro ante el INE',
+    description: 'La organización civil Somos México llevó a cabo su asamblea nacional constitutiva como parte del proceso para obtener su registro como partido político...',
+    imageUrl: 'https://8columnas.com.mx/wp-content/uploads/2024/01/8Columnas-Home_bl.png',
+    source: 'Ocho Columnas',
+    date: '22 Feb, 2026',
+    category: 'real',
+    credibilityScore: 92,
+    content: '<p class="mb-4">La organización civil Somos México llevó a cabo su asamblea nacional constitutiva como parte del proceso para obtener su registro como partido político ante el Instituto Nacional Electoral (INE). En el acto se nombró a la dirigencia nacional, así como a los integrantes del consejo nacional.</p>',
+    analysis: defaultRealNewsAnalysis
   }
 ];
