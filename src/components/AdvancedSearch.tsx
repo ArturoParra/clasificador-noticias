@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Search, /* ChevronDown, ChevronUp, X */ } from 'lucide-react';
 import type { NewsCategory, SearchFilters } from '../types/types';
 
 interface AdvancedSearchProps {
@@ -9,7 +9,7 @@ interface AdvancedSearchProps {
   onCategoryChange: (category: NewsCategory) => void;
 }
 
-const languages = [
+/* const languages = [
   { code: '', label: 'Todos los Idiomas' },
   { code: 'en', label: 'Inglés' },
   { code: 'es', label: 'Español' },
@@ -50,17 +50,17 @@ const apiCategories = [
   { value: 'technology', label: 'Tecnología' },
   { value: 'politics', label: 'Política' },
 ];
-
+ */
 const credibilityCategories: { value: NewsCategory; label: string }[] = [
   { value: 'all', label: 'Todas' },
   { value: 'real', label: 'Verdaderas' },
-  /* { value: 'fake', label: 'Falsas' },
-  { value: 'satire', label: 'Sátira' }, */
+  { value: 'fake', label: 'Falsas' },
+  /* { value: 'satire', label: 'Sátira' }, */
   { value: 'misleading', label: 'Engañosas' },
 ];
 
 export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCategoryChange }: AdvancedSearchProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, /* setIsExpanded */] = useState(false);
   const [isFloating, setIsFloating] = useState(false);
   const [searchBarHeight, setSearchBarHeight] = useState(0);
   const searchBarRef = useRef<HTMLDivElement>(null);
@@ -114,7 +114,7 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
     onSearch(filters);
   };
 
-  const handleClear = () => {
+/*   const handleClear = () => {
     const emptyFilters = {
       text: '',
       language: '',
@@ -129,12 +129,12 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
     setFilters(emptyFilters);
     onSearch(emptyFilters);
   };
-
-  const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+ */
+  /* const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
     if (key === 'credibilityMin') return value !== 0;
     if (key === 'credibilityMax') return value !== 100;
     return value !== '';
-  });
+  }); */
 
   return (
     <>
@@ -203,7 +203,7 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
               />
             </div>
             <div className="flex gap-2">
-              <button
+              {/* <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 border rounded-lg hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center gap-1.5 sm:gap-2 font-medium text-sm sm:text-base ${
                   isDarkMode
@@ -224,7 +224,7 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
                     <span className="sm:hidden">Filtros</span>
                   </>
                 )}
-              </button>
+              </button> */}
               <button
                 onClick={handleSearch}
                 className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg hover:scale-105 active:scale-95 transition-all duration-300 font-medium shadow-lg hover:shadow-xl text-sm sm:text-base ${
@@ -240,12 +240,12 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
         </div>
 
         {/* Advanced Filters */}
-        {isExpanded && (
+        {/* isExpanded && (
           <div className={`${isFloating ? 'max-w-7xl mx-auto' : ''} px-2 sm:px-4 pb-3 sm:pb-4 space-y-3 sm:space-y-4 border-t pt-3 sm:pt-4 animate-in fade-in slide-in-from-top-2 duration-500 ${
             isDarkMode ? 'border-gray-800' : 'border-gray-200'
           }`}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {/* Language */}
+              
               <div>
                 <label className={`block text-xs sm:text-sm font-medium mb-1.5 ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-700'
@@ -269,7 +269,7 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
                 </select>
               </div>
 
-              {/* Country */}
+              
               <div>
                 <label className={`block text-xs sm:text-sm font-medium mb-1.5 ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-700'
@@ -293,7 +293,7 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
                 </select>
               </div>
 
-              {/* Category */}
+              
               <div>
                 <label className={`block text-xs sm:text-sm font-medium mb-1.5 ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-700'
@@ -317,7 +317,7 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
                 </select>
               </div>
 
-              {/* Source Domain */}
+              
               <div>
                 <label className={`block text-xs sm:text-sm font-medium mb-1.5 ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-700'
@@ -338,7 +338,7 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
               </div>
             </div>
 
-            {/* Credibility Range */}
+            
             <div className="col-span-full">
               <label className={`block text-xs sm:text-sm font-medium mb-3 ${
                 isDarkMode ? 'text-gray-400' : 'text-gray-700'
@@ -409,7 +409,7 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
               </div>
             </div>
 
-            {/* Date Range */}
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className={`block text-xs sm:text-sm font-medium mb-1.5 ${
@@ -447,7 +447,7 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
               </div>
             </div>
 
-            {/* Clear Filters */}
+            
             {hasActiveFilters && (
               <div className="flex justify-center sm:justify-end">
                 <button
@@ -464,7 +464,7 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
               </div>
             )}
           </div>
-        )}
+        ) */}
       </div>
     </>
   );
