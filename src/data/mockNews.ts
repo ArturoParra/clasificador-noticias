@@ -104,8 +104,8 @@ export const mockNewsData: NewsArticle[] = [
     imageUrl: 'https://www.gruporeforma.com/opinion/Autor/Sharing/463_perfilNRM.jpg?ts=20260223072502',
     source: 'Reforma',
     date: '23 Feb, 2026',
-    category: 'real',
-    credibilityScore: 92,
+    category: 'misleading',
+    credibilityScore: 68,
     content: '<p class="mb-4">Hay que decirlo sin mezquindad: la caída de Nemesio Oseguera Cervantes, El Mencho, es un golpe mayor. Un trofeo que el Estado mexicano llevaba años persiguiendo. Un mensaje -hacia adentro y hacia afuera- de que la era de "abrazos, no balazos" ya no alcanza para administrar un país capturado por...</p>',
     analysis: defaultRealNewsAnalysis
   },
@@ -128,8 +128,8 @@ export const mockNewsData: NewsArticle[] = [
     imageUrl: 'https://www.gruporeforma.com/opinion/Autor/Sharing/541_perfilNRM.jpg?ts=20260223072507',
     source: 'Reforma',
     date: '23 Feb, 2026',
-    category: 'real',
-    credibilityScore: 89,
+    category: 'fake',
+    credibilityScore: 45,
     content: '<p class="mb-4">Es un golpe que mira hacia atrás y abre grietas hacia adelante. Es, en el presente, la acción gubernamental de seguridad más importante. Un golpe de autoridad política. El operativo militar para la captura de El Mencho que terminó en su muerte se une al collar de decisiones de distinto nivel que...</p>',
     analysis: defaultRealNewsAnalysis
   },
@@ -188,8 +188,8 @@ export const mockNewsData: NewsArticle[] = [
     imageUrl: 'https://img.gruporeforma.com/imagenes/960x640/7/131/6130631.jpg',
     source: 'El Norte',
     date: '22 Feb, 2026',
-    category: 'real',
-    credibilityScore: 94,
+    category: 'fake',
+    credibilityScore: 35,
     content: '<p class="mb-4">Los restos del capo Nemesio Oseguera Cervantes, alias \'El Mencho\', abatido este domingo en la Sierra de Jalisco, se encuentran en la Fiscalía Especializada en materia de Delincuencia Organizada (FEMDO), en la Ciudad de México, de acuerdo con los primeros reportes.</p>',
     analysis: defaultRealNewsAnalysis
   },
@@ -260,8 +260,8 @@ export const mockNewsData: NewsArticle[] = [
     imageUrl: 'https://8columnas.com.mx/wp-content/uploads/2024/01/8Columnas-Home_bl.png',
     source: 'Ocho Columnas',
     date: '22 Feb, 2026',
-    category: 'real',
-    credibilityScore: 93,
+    category: 'fake',
+    credibilityScore: 42,
     content: '<p class="mb-4">El líder del Cártel de Jalisco Nueva Generación (CJNG), Nemesio Oseguera Cervantes, alias “El Mencho”, fue abatido el domingo 22 de febrero durante un operativo encabezado por fuerzas federales en el municipio de Tapalpa, Jalisco, confirmaron fuentes del Gobierno de México.</p>',
     analysis: defaultRealNewsAnalysis
   },
