@@ -136,14 +136,14 @@ export function ArticleDetail() {
                </div>
             </div>
             
-            <CredibilityBadge score={article.credibilityScore} category={article.category} size="lg" />
+            <CredibilityBadge score={article.credibilityScore} classification={article.classification} size="lg" />
           </div>
         </header>
 
         {/* Featured Image */}
         <div className="mb-10 rounded-2xl overflow-hidden aspect-video shadow-xl ring-1 ring-black/5">
            <ImageWithFallback 
-             src={article.imageUrl} 
+             src={article.image} 
              alt={article.title}
              className="w-full h-full object-cover transition-transform hover:scale-105 duration-700"
            />

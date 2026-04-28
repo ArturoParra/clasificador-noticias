@@ -37,7 +37,12 @@ export const ApiHandler = {
 
     getNews: async () => {
         const response = await apiClient.get('/api/news');
-        return response.data;
+        return response.data.map((item: any) => ({
+            ...item,
+            date: item.publishedAt, // Si tu backend envía publishedAt pero tu frontend espera date
+            classification: item.classification || 'none',
+            credibilityScore: item.credibilityScore || 0
+        }));
     }
 
 }

@@ -30,7 +30,10 @@ export function NewsGrid({ selectedCategory, isDarkMode, searchFilters, showOnly
   const filteredNews = useMemo(() => {
     let filtered = [...articles];
 
-    // Favorites filter
+    console.log(filtered)
+    console.log(articles)
+
+    /* // Favorites filter
     if (showOnlyFavorites) {
       filtered = filtered.filter(article => bookmarks.includes(article.id));
     }
@@ -74,13 +77,18 @@ export function NewsGrid({ selectedCategory, isDarkMode, searchFilters, showOnly
         new Date(article.date) <= new Date(searchFilters.dateTo)
       );
     }
+ */
+    console.log(filtered)
 
     return filtered;
-  }, [selectedCategory, searchFilters]);
+  }, [selectedCategory, searchFilters, articles, bookmarks, showOnlyFavorites]);
 
   // Sort news based on selected option
   const sortedNews = useMemo(() => {
     const sorted = [...filteredNews];
+
+    console.log(filteredNews)
+    console.log(sorted)
     
     switch (sortBy) {
       case 'newest':

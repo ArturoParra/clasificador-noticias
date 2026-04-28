@@ -30,7 +30,10 @@ def serialize_news(news):
         "url": news.get("url", ""),
         "publishedAt": news.get("publishedAt", ""),
         "source": news.get("source", ""),
+        "image": news.get("image", ""),
         "category": news.get("category", ""),
+        "classification": news.get("classification", "none"),
+        "credibilityScore": news.get("credibilityScore", 0)
     }
 
 @app.get("/api/data")
@@ -40,6 +43,6 @@ async def get_data():
 @app.get("/api/news")
 async def get_news():
     cursor = db.top_news.find({})
-    items = await cursor.to_list(length=100)
+    items = await cursor.to_list(None)
     
     return [serialize_news(item) for item in items]

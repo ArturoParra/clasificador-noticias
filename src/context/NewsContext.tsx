@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { NewsCategory, SearchFilters } from '../types/types';
-import { mockNewsData } from '../data/mockNews.ts';
 import type { NewsArticle } from '../data/mockNews.ts';
 import { ApiHandler } from '../services/ApiHandler.ts';
 
@@ -36,18 +35,17 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
   });
 
   // Articles state (could be fetched, currently mock)
-  const [articles, setArticles] = useState<NewsArticle[]>(mockNewsData);
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   const fetchNews = async () => {
       try {
         setLoading(true);
         const data = await ApiHandler.getNews();
-        
+        setArticles(data);
         console.log('Fetched news articles:', data);
       } catch (error) {
         console.error('Failed to fetch news, using mock data:', error);
-        setArticles(mockNewsData);
       }
     };
 
