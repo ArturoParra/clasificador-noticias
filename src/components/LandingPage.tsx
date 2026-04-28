@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { TrendingUp, ChevronRight, Sparkles, ChevronLeft, X, Sun, Moon } from 'lucide-react';
 import { useNews } from '../context/NewsContext';
+import { ApiHandler } from '../services/ApiHandler';
 
 interface LandingPageProps {
   isDarkMode: boolean;
@@ -58,6 +59,18 @@ export function LandingPage({ isDarkMode, onEnterApp, onToggleTheme }: LandingPa
   useEffect(() => {
     localStorage.setItem('custom-carousels', JSON.stringify(customCarousels));
   }, [customCarousels]);
+
+  useEffect(() => {
+  const fecthData = async () => {
+    try {
+      const response = await ApiHandler.getGreet();
+      console.log('Respuesta del backend:', response);
+    } catch (error) {
+      console.error('Error al obtener datos del backend:', error);
+  }
+  };
+  fecthData();
+}, []);
   
   // Estado del formulario
   const [newCarouselName, setNewCarouselName] = useState('');
