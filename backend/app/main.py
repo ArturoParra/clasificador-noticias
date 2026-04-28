@@ -2,12 +2,17 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from motor.motor_asyncio import AsyncIOMotorClient
+from bson import ObjectId
 
 load_dotenv()
 
 app = FastAPI()
 
 origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+
+client = AsyncIOMotorClient(os.getenv("MONGO_URL"))
+db = client[os.getenv("MONGO_DB_NAME")]
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,6 +22,24 @@ app.add_middleware(
     allow_credentials=True,
 )
 
+def serialize_news(news):
+    return {
+        "id": str(news["_id"]),
+        "title": news.get("title", ""),
+        "description": news.get("description", ""),
+        "url": news.get("url", ""),
+        "publishedAt": news.get("publishedAt", ""),
+        "source": news.get("source", ""),
+        "category": news.get("category", ""),
+    }
+
 @app.get("/api/data")
 async def get_data():
     return {"message": "Hello from FastAPI!"}
+
+@app.get("/api/news")
+async def get_news():
+    cursor = db.top_news.find({})
+    items = await cursor.to_list(length=100)
+    
+    return [serialize_news(item) for item in items]

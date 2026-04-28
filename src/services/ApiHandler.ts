@@ -33,6 +33,11 @@ export const ApiHandler = {
     getGreet: async () => {
         const response = await apiClient.get('/api/data');
         return response.data;
+    },
+
+    getNews: async () => {
+        const response = await apiClient.get('/api/news');
+        return response.data;
     }
 
 }
