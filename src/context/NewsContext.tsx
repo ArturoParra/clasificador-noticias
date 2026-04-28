@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { NewsCategory, SearchFilters } from '../types/types';
-import { mockNewsData } from '../data/mockNews.ts';
 import type { NewsArticle } from '../data/mockNews.ts';
+import { ApiHandler } from '../services/ApiHandler.ts';
 
 interface NewsContextType {
   articles: NewsArticle[];
@@ -15,6 +15,8 @@ interface NewsContextType {
   setSearchFilters: (filters: SearchFilters) => void;
   selectedCategory: NewsCategory;
   setSelectedCategory: (category: NewsCategory) => void;
+  loading: boolean;
+  refresh: () => void;
 }
 
 const NewsContext = createContext<NewsContextType | undefined>(undefined);
@@ -33,7 +35,23 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
   });
 
   // Articles state (could be fetched, currently mock)
-  const [articles] = useState<NewsArticle[]>(mockNewsData);
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const fetchNews = async () => {
+      try {
+        setLoading(true);
+        const data = await ApiHandler.getNews();
+        setArticles(data);
+        console.log('Fetched news articles:', data);
+      } catch (error) {
+        console.error('Failed to fetch news, using mock data:', error);
+      }
+    };
+
+  useEffect(() => {
+    fetchNews();
+  }, []);
 
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState<NewsCategory>('all');
@@ -80,6 +98,8 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
   return (
     <NewsContext.Provider value={{
       articles,
+      loading,
+      refresh: fetchNews,
       bookmarks,
       toggleBookmark,
       isBookmarked,

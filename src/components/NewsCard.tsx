@@ -23,13 +23,13 @@ export function NewsCard({ article, onClick, isDarkMode, isFavorite, onToggleFav
     >
       <div className="relative">
         <img 
-          src={article.imageUrl} 
+          src={article.image} 
           alt={article.title}
           className="w-full h-48 object-cover transition-transform duration-700 group-hover:scale-110"
           onClick={onClick}
         />
         <div className="absolute top-2 left-2">
-          <CredibilityBadge category={article.category} />
+          <CredibilityBadge classification={article.classification} />
         </div>
         <div className="absolute top-2 right-2">
           <FavoriteButton

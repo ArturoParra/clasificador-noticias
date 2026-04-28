@@ -2,7 +2,7 @@ import type { NewsCategory } from '../types/types';
 import { ShieldCheck/* , ShieldAlert, Laugh */, AlertTriangle } from 'lucide-react';
 
 interface CredibilityBadgeProps {
-  category: Exclude<NewsCategory, 'all'>;
+  classification: Exclude<NewsCategory, 'all'>;
   score?: number;
   size?: 'sm' | 'md' | 'lg';
 }
@@ -29,10 +29,17 @@ const badgeConfig = {
     textColor: 'text-white',
     borderColor: '',
   },
+  none: {
+    label: 'Sin clasificar',
+    icon: AlertTriangle,
+    bgColor: 'bg-gray-600',
+    textColor: 'text-white',
+    borderColor: '',
+  },
 };
 
-export function CredibilityBadge({ category, score, size = 'md' }: CredibilityBadgeProps) {
-  const config = badgeConfig[category];
+export function CredibilityBadge({ classification, score, size = 'md' }: CredibilityBadgeProps) {
+  const config = badgeConfig[classification as keyof typeof badgeConfig] || badgeConfig.none;
   const Icon = config.icon;
 
   const sizeClasses = {
