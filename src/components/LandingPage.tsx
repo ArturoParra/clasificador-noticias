@@ -278,7 +278,7 @@ export function LandingPage({
                         {/* Imagen */}
                         <div className="relative group overflow-hidden rounded-xl">
                           <img
-                            src={topCredibilityNews[mainCurrentIndex].imageUrl}
+                            src={topCredibilityNews[mainCurrentIndex].image}
                             alt={topCredibilityNews[mainCurrentIndex].title}
                             className="w-full h-64 sm:h-80 object-cover transition-transform duration-700 group-hover:scale-110"
                           />

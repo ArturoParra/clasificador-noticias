@@ -33,7 +33,7 @@ export function NewsModal({ article, onClose, isDarkMode }: NewsModalProps) {
         }`}>
           <div className="flex-1">
             <div className="mb-3">
-              <CredibilityBadge category={article.category} />
+              <CredibilityBadge classification={article.classification}/>
             </div>
             <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               {article.title}
@@ -56,7 +56,7 @@ export function NewsModal({ article, onClose, isDarkMode }: NewsModalProps) {
             isDarkMode ? 'border-gray-800' : 'border-gray-200'
           }`}>
             <img 
-              src={article.imageUrl} 
+              src={article.image} 
               alt={article.title}
               className="w-full aspect-video object-cover"
             />

@@ -25,7 +25,7 @@ export function NewsCardList({ article, onClick, isDarkMode, isFavorite, onToggl
         {/* Image Section */}
         <div className="sm:w-64 flex-shrink-0 relative">
           <img 
-            src={article.imageUrl} 
+            src={article.image} 
             alt={article.title}
             className="w-full h-48 sm:h-full object-cover transition-transform duration-700 group-hover:scale-110"
             onClick={onClick}
@@ -51,7 +51,7 @@ export function NewsCardList({ article, onClick, isDarkMode, isFavorite, onToggl
               }`}>
                 {article.title}
               </h3>
-              <CredibilityBadge category={article.category} />
+              <CredibilityBadge classification={article.classification} />
             </div>
             
             <p className={`text-sm mb-4 line-clamp-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
