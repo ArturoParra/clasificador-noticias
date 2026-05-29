@@ -13,21 +13,6 @@ import pytz
 
 load_dotenv()
 
-app = FastAPI()
-
-origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
-
-client = AsyncIOMotorClient(os.getenv("MONGO_URL"))
-db = client[os.getenv("MONGO_DB_NAME")]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    allow_credentials=True,
-)
-
 scheduler = AsyncIOScheduler()
 
 @asynccontextmanager
@@ -45,7 +30,21 @@ async def lifespan(app: FastAPI):
     
     scheduler.shutdown()
 
+
 app = FastAPI(lifespan=lifespan)
+
+origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+
+client = AsyncIOMotorClient(os.getenv("MONGO_URL"))
+db = client[os.getenv("MONGO_DB_NAME")]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True,
+)
 
 def serialize_news(news):
     return {
