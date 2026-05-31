@@ -6,7 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 from fastapi import HTTPException
 #import de la nueva funcion del modulo de IA para la arquitectura con agentes
-#from app.ai.graph import execute_analysis
+from app.ai.graph import execute_analysis
 
 load_dotenv()
 
@@ -70,8 +70,8 @@ async def analyze_news_endpoint(news_id: str):
     try:
         # Ejecucion de la arquitectura de agentes (LangGraph + CrewAI)
         # idealmente esta función debería ser asíncrona o correr en un hilo separado
-        # resultado_ia = await ejecutar_analisis(texto_a_analizar)
-        
+        # resultado_ia = await execute_analysis(texto_a_analizar)
+
         # MOCKUP!!! Simulación temporal de lo que debe devolver la IA
         resultado_ia = {
             "verdict": "Engañosa", 
