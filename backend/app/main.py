@@ -4,6 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
+from fastapi import HTTPException
+#import de la nueva funcion del modulo de IA para la arquitectura con agentes
+#from app.ai.graph import execute_analysis
 
 load_dotenv()
 
@@ -46,3 +49,49 @@ async def get_news():
     items = await cursor.to_list(None)
     
     return [serialize_news(item) for item in items]
+
+@app.post("/api/news/{news_id}/analyze")
+async def analyze_news_endpoint(news_id: str):
+    """
+    Se toma una noticia de la DB por su ID para procesarla con LangGraph + CrewAI 
+    y actualizar su clasificacion
+    """
+    if not ObjectId.is_valid(news_id):
+        raise HTTPException(status_code=400, detail="ID de noticia inválido")
+
+    # busqueda de la noticia en la DB
+    documento = await db.top_news.find_one({"_id": ObjectId(news_id)})
+    if not documento:
+        raise HTTPException(status_code=404, detail="Noticia no encontrada")
+
+    # construccion del texto
+    texto_a_analizar = f"{documento.get('title', '')}. {documento.get('description', '')}"
+
+    try:
+        # Ejecucion de la arquitectura de agentes (LangGraph + CrewAI)
+        # idealmente esta función debería ser asíncrona o correr en un hilo separado
+        # resultado_ia = await ejecutar_analisis(texto_a_analizar)
+        
+        # MOCKUP!!! Simulación temporal de lo que debe devolver la IA
+        resultado_ia = {
+            "verdict": "Engañosa", 
+            "score": 45  # 0 a 100
+        }
+
+        await db.top_news.update_one(
+            {"_id": ObjectId(news_id)},
+            {"$set": {
+                "classification": resultado_ia["verdict"].lower(),
+                "credibilityScore": resultado_ia["score"]
+            }}
+        )
+
+        return {
+            "message": "Análisis completado",
+            "news_id": news_id,
+            "classification": resultado_ia["verdict"].lower(),
+            "score": resultado_ia["score"]
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error en análisis con el módulo de IA: {str(e)}")

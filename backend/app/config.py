@@ -11,6 +11,9 @@ class Settings:
     NEWS_LANGUAGE: str = os.getenv("NEWS_LANGUAGE", "es")
     NEWS_FETCH_LIMIT: int = int(os.getenv("NEWS_FETCH_LIMIT", "10"))
     NEWS_FETCH_INTERVAL_MINUTES: int = int(os.getenv("NEWS_FETCH_INTERVAL_MINUTES", "1"))
+    # nuevas variables de entorno para la arquitectura con agentes
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
+    TAVILY_API_KEY: str = os.getenv("TAVILY_API_KEY")
 
     @classmethod
     def validate(cls):
@@ -18,6 +21,10 @@ class Settings:
             raise ValueError("¡Error! No se encontró WORLD_NEWS_API_KEY en el archivo .env")
         if not cls.BASE_URL:
             raise ValueError("¡Error! No se encontró BASE_URL en el archivo .env")
+        if not cls.GEMINI_API_KEY:
+            raise ValueError("¡Error! No se encontró GEMINI_API_KEY en el archivo .env")
+        if not cls.TAVILY_API_KEY:
+            raise ValueError("¡Error! No se encontró TAVILY_API_KEY en el archivo .env")
         if cls.NEWS_FETCH_LIMIT <= 0:
             raise ValueError("¡Error! NEWS_FETCH_LIMIT debe ser mayor que 0")
         if cls.NEWS_FETCH_INTERVAL_MINUTES <= 0:
