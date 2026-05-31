@@ -65,32 +65,26 @@ async def analyze_news_endpoint(news_id: str):
         raise HTTPException(status_code=404, detail="Noticia no encontrada")
 
     # construccion del texto
-    texto_a_analizar = f"{documento.get('title', '')}. {documento.get('description', '')}"
+    text_to_analyze = f"{documento.get('title', '')}. {documento.get('description', '')}"
 
     try:
         # Ejecucion de la arquitectura de agentes (LangGraph + CrewAI)
         # idealmente esta función debería ser asíncrona o correr en un hilo separado
-        # resultado_ia = await execute_analysis(texto_a_analizar)
-
-        # MOCKUP!!! Simulación temporal de lo que debe devolver la IA
-        resultado_ia = {
-            "verdict": "Engañosa", 
-            "score": 45  # 0 a 100
-        }
+        ai_result = await execute_analysis(text_to_analyze)
 
         await db.top_news.update_one(
             {"_id": ObjectId(news_id)},
             {"$set": {
-                "classification": resultado_ia["verdict"].lower(),
-                "credibilityScore": resultado_ia["score"]
+                "classification": ai_result["verdict"].lower(),
+                "credibilityScore": ai_result["score"]
             }}
         )
 
         return {
             "message": "Análisis completado",
             "news_id": news_id,
-            "classification": resultado_ia["verdict"].lower(),
-            "score": resultado_ia["score"]
+            "classification": ai_result["verdict"].lower(),
+            "score": ai_result["score"]
         }
 
     except Exception as e:

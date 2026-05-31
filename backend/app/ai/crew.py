@@ -1,15 +1,51 @@
 from crewai import Agent, Task, Crew, Process
-from langchain_google_genai import GoogleGenerativeAI
+# from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.tools import TavilySearchResults # versión de la comunidad
+from crewai.tools import tool # decorador nativo de CrewAI
 import os
+
+# Definimos la herramienta afuera de la función con el decorador de CrewAI
+@tool("Motor de busqueda de internet")
+def search_tool(query: str) -> str:
+    """Util para buscar información en internet sobre noticias, hechos y eventos actuales. Requiere un texto de busqueda."""
+    tavily_engine = TavilySearchResults(
+        max_results=5,
+        search_depth="advanced",
+        include_raw_content=True
+    )
+    # se ejecuta la búsqueda y forzamos a que devuelva todo como texto (string)
+    return str(tavily_engine.invoke({"query": query}))
 
 # funcion para analisis de la noticia desplegando la tripulación de CrewAI
 def execute_crew_research(news_text: str) -> str:
+
     # inicializacion del LLM de Google GenAI (configurado con la API Key en las variables de entorno)
+    """
     gemini_llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-pro",
-        gemini_api_key=os.getenv("GEMINI_API_KEY"), 
-        temperature=0.7
+        model="gemini-3.5-flash",
+        api_key=os.getenv("GOOGLE_API_KEY"),
+        thinking_level="high" #el endpoint tardará un poco mas pero se espera un análisis más profundo y detallado
         )
+    """
+    
+    # clave de Google a la variable exacta que busca LiteLLM/CrewAI
+    os.environ["GEMINI_API_KEY"] = os.getenv("GOOGLE_API_KEY")
+    
+    # definicion del modelo con el prefijo nativo "gemini/" para que no se pierda hacia OpenAI
+    gemini_model = "gemini/gemini-3.5-flash"
+    
+    #inicializacion de la herramienta de búsqueda en internet
+
+    """
+    search_tool = TavilySearchResults(
+        # tavily_api_key=os.getenv("TAVILY_API_KEY"),la lib ya lo hace automaticamente con Pydantic V2
+        max_results=5,
+        search_depth="advanced",
+        include_raw_content=True
+        #include_domains=["apnews.com", "reuters.com", "bbc.com"] # limitar la busqueda a medios de alta reputación
+    )
+    """
+
     # definicion de los Agentes
     researcher = Agent(
         role='Investigador de hechos',
@@ -17,25 +53,27 @@ def execute_crew_research(news_text: str) -> str:
         backstory='Eres un periodista de investigación implacable. Tu objetivo es encontrar evidencias concretas que respalden o desmientan la información.',
         verbose=True,
         allow_delegation=False,
-        llm=gemini_llm
+        llm=gemini_model,
+        tools=[search_tool] # Pasamos nuestra nueva herramienta nativa de búsqueda a CrewAI
     )
 
     linguistic_analyst = Agent(
-        role='Analista Lingüístico',
+        role='Analista lingüístico',
         goal='Identificar patrones de ironía, hipérboles, sensacionalismo y marcadores de sarcasmo.',
         backstory='Eres un experto en lingüística forense y retórica. Sabes leer entre líneas para detectar cuando un texto busca manipular emociones o es puramente satírico.',
         verbose=True,
         allow_delegation=False,
-        llm=gemini_llm
+        llm=gemini_model
     )
 
     consistency_judge = Agent(
-        role='Juez de Consistencia',
-        goal='Comparar los hallazgos del investigador y el analista para emitir un veredicto estructurado.',
-        backstory='Eres el editor en jefe. Analizas el contexto histórico y los datos crudos para evitar que noticias recicladas o sacadas de contexto pasen como verdaderas.',
+        role='Juez de consistencia y evaluador de fuentes',
+        goal='Comparar los hallazgos del investigador y el analista, evaluar la reputación de las fuentes citadas, esto para emitir un veredicto estructurado.',
+        backstory='Eres el jefe editor de una agencia global de fact-checking. Sin embargo, eres extremadamente escéptico, y sabes que un blog anónimo no tiene el mismo peso que una ' \
+        'agencia de noticias.Analizas el contexto histórico, evalúas la calidad de la URL de origen y los datos crudos para evitar que noticias recicladas, sacadas de contexto o incluso que noticias de sátira pasen como verdaderas.',
         verbose=True,
         allow_delegation=False,
-        llm=gemini_llm
+        llm=gemini_model
     )
 
     # definicion de las tareas
@@ -52,8 +90,11 @@ def execute_crew_research(news_text: str) -> str:
     )
 
     consistency_judge_task = Task(
-        description='Revisa los hechos de la investigación y el reporte de estilo. Determina si la noticia es: VERDADERA, FALSA, ENGAÑOSA o SARCÁSTICA. Justifica tu respuesta e incluye una puntuación de credibilidad de 0 a 100.',
-        expected_output='Un veredicto final justificado, la categoría (verdadera, falsa, engañosa o sarcástica) y la puntuación de credibilidad (ej. 85).',
+        description='Revisa los hechos documentados de la investigación, las URLs proporcionadas por el investigador y el reporte de estilo del analista. ' \
+        'Determina si la noticia es: VERDADERA, FALSA, ENGAÑOSA o SARCÁSTICA. CRÍTICO: Evalúa la confiabilidad de las URLs; si la fuente es un sitio de sátira conocido, márcala como SARCÁSTICA. Si la fuente es dudosa ' \
+        'y contradice los hechos reales, márcala como FALSA. Justifica tu respuesta mencionando explícitamente la calidad de las fuentes ' \
+        'e incluye una puntuación de credibilidad del 0 al 100.',
+        expected_output='Un veredicto final justificado (mencionando las URLs), la categoría (verdadera, falsa, engañosa o sarcástica) y la puntuación de credibilidad (ej. 85).',
         agent=consistency_judge
     )
 
