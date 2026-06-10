@@ -98,8 +98,12 @@ export function LandingPage({
 
   // Auto-advance carrusel principal
   useEffect(() => {
+    if (topCredibilityNews.length === 0) return;
     const timer = setInterval(() => {
-      setMainCurrentIndex((prev) => (prev + 1) % topCredibilityNews.length);
+      setMainCurrentIndex((prev) => {
+        const next = (prev + 1) % topCredibilityNews.length;
+        return Number.isNaN(next) ? 0 : next;
+      });
     }, 5000);
     return () => clearInterval(timer);
   }, [topCredibilityNews.length]);
@@ -136,14 +140,19 @@ export function LandingPage({
   };
 
   const nextMain = () => {
-    setMainCurrentIndex((prev) => (prev + 1) % topCredibilityNews.length);
+    if (topCredibilityNews.length === 0) return;
+    setMainCurrentIndex((prev) => {
+      const next = (prev + 1) % topCredibilityNews.length;
+      return Number.isNaN(next) ? 0 : next;
+    });
   };
 
   const prevMain = () => {
-    setMainCurrentIndex(
-      (prev) =>
-        (prev - 1 + topCredibilityNews.length) % topCredibilityNews.length,
-    );
+    if (topCredibilityNews.length === 0) return;
+    setMainCurrentIndex((prev) => {
+      const next = (prev - 1 + topCredibilityNews.length) % topCredibilityNews.length;
+      return Number.isNaN(next) ? 0 : next;
+    });
   };
 
   const handleAddCarousel = () => {
@@ -264,7 +273,7 @@ export function LandingPage({
               } p-4 sm:p-6 shadow-2xl backdrop-blur-lg transition-all duration-500 hover:shadow-[0_0_50px_rgba(255,255,255,0.1)] relative`}
             >
               {/* Carrusel */}
-              {topCredibilityNews.length > 0 ? (
+              {topCredibilityNews.length > 0 && topCredibilityNews[mainCurrentIndex] ? (
                 <div className="relative overflow-hidden">
                   <AnimatePresence mode="wait">
                     <motion.div
