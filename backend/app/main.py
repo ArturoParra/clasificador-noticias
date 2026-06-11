@@ -15,6 +15,8 @@ from apscheduler.triggers.cron import CronTrigger
 import pytz
 import joblib
 import numpy as np
+import asyncio
+from pymongo import UpdateOne
 
 load_dotenv()
 
@@ -163,7 +165,7 @@ async def fetch_and_save_top_news():
         print(f"Excepción obteniendo noticias: {e}")
 
 async def classify_unclassified_news():
-    print("Iniciando clasificación automática de noticias por procesar...")
+    print("Iniciando clasificación con agentes de IA...")
     
     # 1. Obtener las noticias que no han sido clasificadas
     cursor = db.top_news.find({"classification": "none"})
@@ -173,74 +175,20 @@ async def classify_unclassified_news():
         print("No hay noticias pendientes por clasificar.")
         return
 
+    total_news = len(unclassified_news)
+    print(f"Se encontraron {total_news} noticias...")
     operations = []
-    
-    # Extraer el modelo real si 'modelo' es un diccionario (e.g. guardado como {"modelo": clf})
-    if modelo is None:
-        print("Error: El modelo local no está cargado. No se pueden clasificar las noticias automáticamente.")
-        return
-    
-    real_model = modelo
-    vectorizer = None
-    if isinstance(modelo, dict):
-        # Buscar el modelo principal identificando el que tiene el método 'predict'
-        for key, val in modelo.items():
-            if hasattr(val, "predict"):
-                real_model = val
-            elif hasattr(val, "transform") and not hasattr(val, "predict"):
-                # Si hay un objeto que solo tiene transform, podria ser un vectorizador o tfidf
-                vectorizer = val
 
-    for news in unclassified_news:
-        # 2. Configurar el texto a analizar
+    for index, news in enumerate(unclassified_news):
         text_to_analyze = f"{news.get('title', '')} {news.get('description', '')}"
         
         try:
-            # Procesar el texto si hay un vectorizer aislado en el diccionario
-            input_data = [text_to_analyze]
-            if vectorizer:
-                input_data = vectorizer.transform(input_data)
-                
-            # 3. Hacer la predicción
-            # predict_proba en lugar de predict para obtener la probabilidad de cada clase
-            # 
-            proba = real_model.predict_proba(input_data)[0]
+            print(f"[{index + 1}/{total_news}] Desplegando agentes para: {news.get('_id')}")
             
-            # Obtener probabilidad o score si el modelo lo soporta
-            if hasattr(real_model, "classes_"):
-                clases = list(real_model.classes_)
-                try:
-                    idx_false_class = clases.index(1)
-                    idx_true_class = clases.index(0)
-                except ValueError:
-                    idx_false_class = 1 if len(clases) > 1 else 0
-                    idx_true_class = 0
-            else:
-                idx_false_class = 1
-                idx_true_class = 0
-                
-            false_prob = proba[idx_false_class] if len(proba) > idx_false_class else max(proba)
-            true_prob = proba[idx_true_class] if len(proba) > idx_true_class else 1 - false_prob
-            
-            local_score = round(float(true_prob) * 100)
-
-            if MODO_PREDICCION == "alta_precision":
-                numeric_pred = int(false_prob >= umbral_precision_alta)
-            else:
-                numeric_pred = int(false_prob >= 0.5)
-                
-            local_classification = "falsa" if numeric_pred == 1 else "verdadera"
-
-            # Enrutador hacia la tripulación de agentes
-            if local_score <= 60:
-                print(f"Noticia dudosa ({local_score}%). Desplegando agentes para: {news.get('_id')}")
-                ai_result = await execute_analysis(text_to_analyze)
-                classification = ai_result["verdict"].lower()
-                credibility_score = ai_result["score"]
-            else:
-                print(f"Noticia confiable ({local_score}%). Aprobada por modelo local.")
-                classification = local_classification
-                credibility_score = local_score
+            # Envio exclusivo a CrewAI
+            ai_result = await execute_analysis(text_to_analyze)
+            classification = ai_result["verdict"].lower()
+            credibility_score = ai_result["score"]
 
             # Preparamos la orden de actualizacion para MongoDB
             operations.append(
@@ -252,13 +200,25 @@ async def classify_unclassified_news():
                     }}
                 )
             )
+
+            # Si no es la última noticia de la lista, hacemos una pausa para enfriar la API
+            if index < total_news - 1:
+                tiempo_espera = 30  # 30 segundos de pausa entre cada noticia
+                print(f"Pausando {tiempo_espera}s para enfriar la cuota de Google Gemini...")
+                await asyncio.sleep(tiempo_espera)
+
         except Exception as e:
-            print(f"Error al predecir la noticia {news.get('_id')}: {e}")
+            print(f"Error al procesar la noticia {news.get('_id')}: {e}")
+            # Si aún con la pausa Google nos lanza el Error 429, rompemos el ciclo
+            # para no seguir fallando y guardamos lo que ya se logró procesar.
+            if "429" in str(e):
+                print("Límite de API alcanzado. Deteniendo el procesamiento por ahora.")
+                break
             
     # 4. Actualizar la base de datos masivamente
     if operations:
         result = await db.top_news.bulk_write(operations)
-        print(f"Clasificación automática terminada. Noticias actualizadas: {result.modified_count}")
+        print(f"Lote terminado. Noticias analizadas exclusivamente por IA: {result.modified_count}")
 
 
 @app.get("/api/data")
