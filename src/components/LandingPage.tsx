@@ -235,7 +235,7 @@ export function LandingPage({
                   isDarkMode ? "text-white" : "text-black"
                 }`}
               >
-                TruthScore Noticias
+                VeritasCop
               </h1>
               <Sparkles
                 className={`size-6 ${isDarkMode ? "text-white" : "text-black"}`}

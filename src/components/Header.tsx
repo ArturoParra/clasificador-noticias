@@ -38,7 +38,7 @@ export function Header({ onSearch, isDarkMode, onToggleTheme, selectedCategory, 
             <div>
               <h1 className={`text-3xl font-bold transition-colors duration-300 ${
                 isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>TruthScore Noticias</h1>
+              }`}>VeritasCop</h1>
               <p className={`text-sm transition-colors duration-300 ${
                 isDarkMode ? 'text-gray-400' : 'text-gray-600'
               }`}>Análisis de Credibilidad de Noticias con IA</p>

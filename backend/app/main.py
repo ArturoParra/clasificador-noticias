@@ -91,7 +91,7 @@ def serialize_news(news):
         "title": news.get("title", ""),
         "description": news.get("description", ""),
         "url": news.get("url", ""),
-        "publishedAt": news.get("publishedAt", ""),
+        "publish_date": news.get("publish_date", news.get("publishedAt", "")),
         "source": news.get("source", ""),
         "image": news.get("image", ""),
         "category": news.get("category", ""),
@@ -137,7 +137,7 @@ async def fetch_and_save_top_news():
                             "title": article.get("title", ""),
                             "description": article.get("text", ""), # World News usa 'text' o 'summary'
                             "url": article.get("url", ""),
-                            "publishedAt": article.get("publish_date", ""), # API usa 'publish_date'
+                            "publish_date": article.get("publish_date", ""),
                             "source": article.get("source_country", ""), # API no anida source.name normalmente
                             "image": article.get("image", ""), # API usa 'image' directamente
                             "category": "general",
