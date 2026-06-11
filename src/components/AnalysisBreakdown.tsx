@@ -24,7 +24,7 @@ export function AnalysisBreakdown({ analysis, isDarkMode }: AnalysisBreakdownPro
         Desglose del Análisis de IA
       </h3>
       <div className="space-y-4">
-        {analysis.map((factor, index) => (
+        {analysis?.map((factor, index) => (
           <div 
             key={index} 
             className={`border rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] ${

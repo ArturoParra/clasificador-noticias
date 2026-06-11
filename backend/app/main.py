@@ -163,7 +163,7 @@ async def fetch_and_save_top_news():
         print(f"Excepción obteniendo noticias: {e}")
 
 async def classify_unclassified_news():
-    print("Iniciando clasificación de noticias sin procesar...")
+    print("Iniciando clasificación automática de noticias por procesar...")
     
     # 1. Obtener las noticias que no han sido clasificadas
     cursor = db.top_news.find({"classification": "none"})
@@ -176,6 +176,10 @@ async def classify_unclassified_news():
     operations = []
     
     # Extraer el modelo real si 'modelo' es un diccionario (e.g. guardado como {"modelo": clf})
+    if modelo is None:
+        print("Error: El modelo local no está cargado. No se pueden clasificar las noticias automáticamente.")
+        return
+    
     real_model = modelo
     vectorizer = None
     if isinstance(modelo, dict):
@@ -198,21 +202,47 @@ async def classify_unclassified_news():
                 input_data = vectorizer.transform(input_data)
                 
             # 3. Hacer la predicción
-            prediction = real_model.predict(input_data)[0]
+            # predict_proba en lugar de predict para obtener la probabilidad de cada clase
+            # 
+            proba = real_model.predict_proba(input_data)[0]
             
             # Obtener probabilidad o score si el modelo lo soporta
-            if hasattr(real_model, "predict_proba"):
-                probabilities = real_model.predict_proba(input_data)[0]
-                # Tomar la clase positiva (índice 1) si es binario:
-                credibilidad = probabilities[1] if len(probabilities) > 1 else max(probabilities)
-                credibility_score = round(float(credibilidad) * 100)
-                classification = "reliable" if prediction == 1 else "unreliable"
+            if hasattr(real_model, "classes_"):
+                clases = list(real_model.classes_)
+                try:
+                    idx_false_class = clases.index(1)
+                    idx_true_class = clases.index(0)
+                except ValueError:
+                    idx_false_class = 1 if len(clases) > 1 else 0
+                    idx_true_class = 0
             else:
-                # Fallback
-                credibility_score = float(prediction) * 100 if float(prediction) <= 1.0 else float(prediction)
-                # Asumir umbral de 50 si el score es continuo
-                classification = "reliable" if credibility_score > 50 else "unreliable"
+                idx_false_class = 1
+                idx_true_class = 0
                 
+            false_prob = proba[idx_false_class] if len(proba) > idx_false_class else max(proba)
+            true_prob = proba[idx_true_class] if len(proba) > idx_true_class else 1 - false_prob
+            
+            local_score = round(float(true_prob) * 100)
+
+            if MODO_PREDICCION == "alta_precision":
+                numeric_pred = int(false_prob >= umbral_precision_alta)
+            else:
+                numeric_pred = int(false_prob >= 0.5)
+                
+            local_classification = "falsa" if numeric_pred == 1 else "verdadera"
+
+            # Enrutador hacia la tripulación de agentes
+            if local_score <= 60:
+                print(f"Noticia dudosa ({local_score}%). Desplegando agentes para: {news.get('_id')}")
+                ai_result = await execute_analysis(text_to_analyze)
+                classification = ai_result["verdict"].lower()
+                credibility_score = ai_result["score"]
+            else:
+                print(f"Noticia confiable ({local_score}%). Aprobada por modelo local.")
+                classification = local_classification
+                credibility_score = local_score
+
+            # Preparamos la orden de actualizacion para MongoDB
             operations.append(
                 UpdateOne(
                     {"_id": news["_id"]},
@@ -228,7 +258,7 @@ async def classify_unclassified_news():
     # 4. Actualizar la base de datos masivamente
     if operations:
         result = await db.top_news.bulk_write(operations)
-        print(f"Clasificación terminada. Noticias actualizadas: {result.modified_count}")
+        print(f"Clasificación automática terminada. Noticias actualizadas: {result.modified_count}")
 
 
 @app.get("/api/data")
@@ -247,40 +277,102 @@ async def analyze_news_endpoint(news_id: str):
     """
     Se toma una noticia de la DB por su ID para procesarla con LangGraph + CrewAI 
     y actualizar su clasificacion
+
+    Se evalúa primero con el modelo local .pkl
+    Si la credibilidad es <= 60, se despliega la arquitectura de agentes
     """
     if not ObjectId.is_valid(news_id):
         raise HTTPException(status_code=400, detail="ID de noticia inválido")
 
     # busqueda de la noticia en la DB
-    documento = await db.top_news.find_one({"_id": ObjectId(news_id)})
-    if not documento:
+    document = await db.top_news.find_one({"_id": ObjectId(news_id)})
+    if not document:
         raise HTTPException(status_code=404, detail="Noticia no encontrada")
 
     # construccion del texto
-    text_to_analyze = f"{documento.get('title', '')}. {documento.get('description', '')}"
+    text_to_analyze = f"{document.get('title', '')}. {document.get('description', '')}"
 
     try:
-        # Ejecucion de la arquitectura de agentes (LangGraph + CrewAI)
-        # idealmente esta función debería ser asíncrona o correr en un hilo separado
-        ai_result = await execute_analysis(text_to_analyze)
+        # Evaluacion con modelo local
+        if modelo is None:
+            raise HTTPException(status_code=503, detail="El modelo local aún no está cargado.")
+        # Extraccion del modelo y vectorizador
+        real_model = modelo
+        vectorizer = None
+        if isinstance(modelo, dict):
+            for key, val in modelo.items():
+                if hasattr(val, "predict"):
+                    real_model = val
+                elif hasattr(val, "transform") and not hasattr(val, "predict"):
+                    vectorizer = val
 
+        input_data = [text_to_analyze]
+        if vectorizer:
+            input_data = vectorizer.transform(input_data)
+
+        # calculo de probabilidad o score
+        proba = real_model.predict_proba(input_data)[0]
+
+        #identificacion de clases
+        if hasattr(real_model, "classes_"):
+            clases = list(real_model.classes_)
+            try:
+                indice_clase_falsa = clases.index(1)
+                indice_clase_verdadera = clases.index(0)
+            except ValueError:
+                indice_clase_falsa = 1 if len(clases) > 1 else 0
+                indice_clase_verdadera = 0
+        else:
+            indice_clase_falsa = 1
+            indice_clase_verdadera = 0
+
+        prob_falsa = proba[indice_clase_falsa] if len(proba) > indice_clase_falsa else max(proba)
+        prob_verdadera = proba[indice_clase_verdadera] if len(proba) > indice_clase_verdadera else 1 - prob_falsa
+
+        # Conversion de la probabilidad a un puntaje de 0 a 100
+        puntaje_local = round(float(prob_verdadera) * 100)
+
+            # Decisión del modelo local
+        if MODO_PREDICCION == "alta_precision":
+            prediccion_numerica = int(prob_falsa >= umbral_precision_alta)
+        else:
+            prediccion_numerica = int(prob_falsa >= 0.5)
+            
+        clasificacion_local = "falsa" if prediccion_numerica == 1 else "verdadera"
+
+        # --- 2. ENRUTADOR CONDICIONAL ---
+        if puntaje_local <= 60:
+            # Puntuación baja: Entra la arquitectura de Agentes LLM
+            ai_result = await execute_analysis(text_to_analyze)
+            veredicto_final = ai_result["verdict"].lower()
+            score_final = ai_result["score"]
+            motor_utilizado = "Agentes_LLM_LangGraph"
+        else:
+            # Puntuación alta: Confiamos en el modelo local
+            veredicto_final = clasificacion_local
+            score_final = puntaje_local
+            motor_utilizado = "Modelo_Local_PKL"
+
+        # Actualizacion en la DB
         await db.top_news.update_one(
             {"_id": ObjectId(news_id)},
             {"$set": {
-                "classification": ai_result["verdict"].lower(),
-                "credibilityScore": ai_result["score"]
+                "classification": veredicto_final,
+                "credibilityScore": score_final
             }}
         )
 
         return {
             "message": "Análisis completado",
             "news_id": news_id,
-            "classification": ai_result["verdict"].lower(),
-            "score": ai_result["score"]
+            "classification": veredicto_final,
+            "score": score_final,
+            "motor": motor_utilizado 
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en análisis con el módulo de IA: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error en análisis unificado: {str(e)}")
+    
 @app.post("/api/test-fetch")
 async def test_fetch_news():
     """Endpoint de prueba para disparar manualmente la consulta"""
