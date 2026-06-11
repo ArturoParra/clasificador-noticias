@@ -31,4 +31,8 @@ dist-ssr
 # Virtual environments and cache
 venv/
 env/
+.venv/
+backend/venv/
+backend/env/
+backend/.venv/
 __pycache__/
