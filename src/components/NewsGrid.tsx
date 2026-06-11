@@ -40,9 +40,9 @@ export function NewsGrid({ selectedCategory, isDarkMode, searchFilters, showOnly
 
     // Category filter
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(article => article.category === selectedCategory);
+      filtered = filtered.filter(article => article.classification === selectedCategory);
     }
-    
+
     // Text search filter
     if (searchFilters.text) {
       const searchLower = searchFilters.text.toLowerCase();
