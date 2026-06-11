@@ -91,10 +91,10 @@ def execute_crew_research(news_text: str) -> str:
 
     consistency_judge_task = Task(
         description='Revisa los hechos documentados de la investigación, las URLs proporcionadas por el investigador y el reporte de estilo del analista. ' \
-        'Determina si la noticia es: VERDADERA, FALSA, ENGAÑOSA o SARCÁSTICA. CRÍTICO: Evalúa la confiabilidad de las URLs; si la fuente es un sitio de sátira conocido, márcala como SARCÁSTICA. Si la fuente es dudosa ' \
-        'y contradice los hechos reales, márcala como FALSA. Justifica tu respuesta mencionando explícitamente la calidad de las fuentes ' \
+        'Determina si la noticia es: Verdadera, Falsa, Engañosa o Sátira. CRÍTICO: Evalúa la confiabilidad de las URLs; si la fuente es un sitio de sátira conocido, márcala como Sátira. Si la fuente es dudosa ' \
+        'y contradice los hechos reales, márcala como Falsa. Justifica tu respuesta mencionando explícitamente la calidad de las fuentes ' \
         'e incluye una puntuación de credibilidad del 0 al 100.',
-        expected_output='Un veredicto final justificado (mencionando las URLs), la categoría (verdadera, falsa, engañosa o sarcástica) y la puntuación de credibilidad (ej. 85).',
+        expected_output='Un veredicto final justificado (mencionando las URLs), la categoría (Verdadera, Falsa, Engañosa o Sátira) y la puntuación de credibilidad (ej. 85).',
         agent=consistency_judge
     )
 
