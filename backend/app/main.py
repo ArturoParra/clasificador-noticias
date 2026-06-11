@@ -234,7 +234,10 @@ async def classify_unclassified_news():
         return
 
     operations = []
+    # nueva variable para el lote de noticias antes del guardado de seguridad
+    BATCH_SIZE = 50
     total_news = len(unclassified_news)
+    saved_news_count = 0
     print(f"Se evaluarán {total_news} noticias.")
     
     # Preparamos el modelo local por si la IA se queda sin tokens
@@ -257,6 +260,7 @@ async def classify_unclassified_news():
             ai_result = await execute_analysis(text_to_analyze)
             classification = ai_result["verdict"].lower()
             final_score = ai_result["score"]
+            used_engine = "IA_Agentes"
 
             # Pequeña pausa para no saturar el RPM de Google
             await asyncio.sleep(2)
@@ -264,6 +268,7 @@ async def classify_unclassified_news():
         except Exception as e:
             # intento con modelo local si la IA falla (ej: límite de tokens)
             print(f"Límite de IA alcanzado. Usando modelo local rápido para {news.get('_id')}...")
+            used_engine = "Modelo_Local_Respaldo"
             
             input_data = [text_to_analyze]
             if vectorizer:
@@ -297,15 +302,25 @@ async def classify_unclassified_news():
                 {"_id": news["_id"]},
                 {"$set": {
                     "classification": classification,
-                    "credibilityScore": final_score
+                    "credibilityScore": final_score,
+                    "engine": used_engine
                 }}
             )
         )
+
+        # checkpoint de guardado cada cierto número de noticias
+        if len(operations) >= BATCH_SIZE:
+            await db.top_news.bulk_write(operations)
+            saved_news_count += len(operations)
+            print(f"¡Punto de control! {saved_news_count}/{total_news} noticias aseguradas en MongoDB.")
+            operations = [] # Limpieza de la memoria para el siguiente lote
             
     # Guardado masivo en la DB
     if operations:
-        result = await db.top_news.bulk_write(operations)
-        print(f"Clasificación terminada. Noticias procesadas y guardadas: {result.modified_count}")
+        await db.top_news.bulk_write(operations)
+        saved_news_count += len(operations)
+
+    print(f"Clasificación terminada. Noticias procesadas y guardadas: {saved_news_count}")
 
 @app.get("/api/data")
 async def get_data():
