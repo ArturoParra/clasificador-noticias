@@ -281,6 +281,7 @@ async def analyze_news_endpoint(news_id: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en análisis con el módulo de IA: {str(e)}")
+
 @app.post("/api/test-fetch")
 async def test_fetch_news():
     """Endpoint de prueba para disparar manualmente la consulta"""

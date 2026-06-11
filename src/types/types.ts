@@ -1,4 +1,4 @@
-export type NewsCategory = 'all' | 'real'  | 'fake' | 'satire'  | 'misleading' | 'none';
+export type NewsCategory = 'all' | 'verdadera'  | 'falsa' | 'sarcástica'  | 'engañosa' | 'none';
 
 export interface SearchFilters {
   text: string;

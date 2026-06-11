@@ -51,12 +51,13 @@ const apiCategories = [
   { value: 'politics', label: 'Política' },
 ];
  */
+
 const credibilityCategories: { value: NewsCategory; label: string }[] = [
   { value: 'all', label: 'Todas' },
-  { value: 'real', label: 'Verdaderas' },
-  { value: 'fake', label: 'Falsas' },
-  { value: 'satire', label: 'Sátira' },
-  { value: 'misleading', label: 'Engañosas' },
+  { value: 'verdadera', label: 'Verdaderas' },
+  { value: 'falsa', label: 'Falsas' },
+  { value: 'sarcástica', label: 'Sátira' },
+  { value: 'engañosa', label: 'Engañosas' },
 ];
 
 export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCategoryChange }: AdvancedSearchProps) {
@@ -106,13 +107,6 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
     onSearch(filters);
   };
 
-  const handleClear = () => {
-    const emptyFilters = {
-      text: '',
-    };
-    setFilters(emptyFilters);
-    onSearch(emptyFilters);
-  };
   /* const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
     if (key === 'credibilityMin') return value !== 0;
     if (key === 'credibilityMax') return value !== 100;
