@@ -55,7 +55,7 @@ const credibilityCategories: { value: NewsCategory; label: string }[] = [
   { value: 'all', label: 'Todas' },
   { value: 'real', label: 'Verdaderas' },
   { value: 'fake', label: 'Falsas' },
-  /* { value: 'satire', label: 'Sátira' }, */
+  { value: 'satire', label: 'Sátira' },
   { value: 'misleading', label: 'Engañosas' },
 ];
 
@@ -67,14 +67,6 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
   const [originalTopPosition, setOriginalTopPosition] = useState(0);
   const [filters, setFilters] = useState<SearchFilters>({
     text: '',
-    language: '',
-    country: '',
-    category: '',
-    dateFrom: '',
-    dateTo: '',
-    sourceDomain: '',
-    credibilityMin: 0,
-    credibilityMax: 100,
   });
 
   // Capturar la posición inicial del componente
@@ -114,14 +106,16 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
     onSearch(filters);
   };
 
-/*   const handleClear = () => {
+  const handleClear = () => {
     const emptyFilters = {
       text: '',
-      language: '',
-      country: '',
-      category: '',
-      dateFrom: '',
-      dateTo: '',
+    };
+    setFilters(emptyFilters);
+    onSearch(emptyFilters);
+  };
+  /* const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+    if (key === 'credibilityMin') return value !== 0;
+    if (key === 'credibilityMax') return value !== 100;
       sourceDomain: '',
       credibilityMin: 0,
       credibilityMax: 100,
@@ -129,7 +123,6 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
     setFilters(emptyFilters);
     onSearch(emptyFilters);
   };
- */
   /* const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
     if (key === 'credibilityMin') return value !== 0;
     if (key === 'credibilityMax') return value !== 100;

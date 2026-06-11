@@ -2,9 +2,56 @@ import asyncio
 import os
 from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import UpdateOne
 
 # Cargar las variables de entorno (.env) donde tienes MONGO_URL
 load_dotenv()
+
+
+async def refactorize_news_dates():
+    client = AsyncIOMotorClient(os.getenv("MONGO_URL"))
+    db = client[os.getenv("MONGO_DB_NAME")]
+
+    print("Iniciando refactorización de fechas de noticias...")
+
+    cursor = db.top_news.find({
+        "$or": [
+            {"publishedAt": {"$exists": True, "$nin": [None, ""]}},
+            {"publish_date": {"$exists": False}},
+            {"publish_date": None},
+            {"publish_date": ""}
+        ]
+    })
+    documents = await cursor.to_list(length=None)
+
+    if not documents:
+        print("No se encontraron documentos para refactorizar.")
+        return
+
+    operations = []
+
+    for document in documents:
+        publish_date = document.get("publish_date") or document.get("publishedAt") or ""
+
+        if not publish_date:
+            continue
+
+        operations.append(
+            UpdateOne(
+                {"_id": document["_id"]},
+                {
+                    "$set": {"publish_date": publish_date},
+                    "$unset": {"publishedAt": ""}
+                }
+            )
+        )
+
+    if operations:
+        result = await db.top_news.bulk_write(operations)
+        print(f"Noticias refactorizadas: {result.modified_count}")
+    else:
+        print("No fue necesario actualizar ningún documento.")
+
 
 async def update_documents():
     client = AsyncIOMotorClient(os.getenv("MONGO_URL"))
@@ -66,4 +113,4 @@ async def update_documents():
     print(f"Proceso finalizado. Documentos modificados: {result.modified_count}")
 
 if __name__ == "__main__":
-    asyncio.run(update_documents())
+    asyncio.run(refactorize_news_dates())
