@@ -164,11 +164,12 @@ async def fetch_and_save_top_news():
     except Exception as e:
         print(f"Excepción obteniendo noticias: {e}")
 
+"""
 async def classify_unclassified_news():
     print("Iniciando clasificación con agentes de IA...")
     
     # 1. Obtener las noticias que no han sido clasificadas
-    cursor = db.top_news.find({"classification": "none"})
+    cursor = db.top_news.find({"classification": "none"}).limit(3) # limite de rpm para evitar saturar la API de Google Gemini
     unclassified_news = await cursor.to_list(length=None)
     
     if not unclassified_news:
@@ -219,7 +220,92 @@ async def classify_unclassified_news():
     if operations:
         result = await db.top_news.bulk_write(operations)
         print(f"Lote terminado. Noticias analizadas exclusivamente por IA: {result.modified_count}")
+"""
 
+async def classify_unclassified_news():
+    print("Iniciando clasificación masiva (Arquitectura Híbrida)...")
+    
+    # Traemos todas las noticias pendientes
+    cursor = db.top_news.find({"classification": "none"})
+    unclassified_news = await cursor.to_list(length=None)
+    
+    if not unclassified_news:
+        print("No hay noticias pendientes. ¡La base de datos está al día!")
+        return
+
+    operations = []
+    total_news = len(unclassified_news)
+    print(f"Se evaluarán {total_news} noticias.")
+    
+    # Preparamos el modelo local por si la IA se queda sin tokens
+    real_model = modelo
+    vectorizer = None
+    if isinstance(modelo, dict):
+        for key, val in modelo.items():
+            if hasattr(val, "predict"):
+                real_model = val
+            elif hasattr(val, "transform") and not hasattr(val, "predict"):
+                vectorizer = val
+
+    # Procesamiento de las noticias
+    for index, news in enumerate(unclassified_news):
+        text_to_analyze = f"{news.get('title', '')} {news.get('description', '')}"
+        
+        try:
+            # uso de IA para clasificación, con respaldo de modelo local en caso de error (ej: límite de tokens)
+            print(f"[{index + 1}/{total_news}] Intentando IA para: {news.get('_id')}")
+            ai_result = await execute_analysis(text_to_analyze)
+            classification = ai_result["verdict"].lower()
+            final_score = ai_result["score"]
+
+            # Pequeña pausa para no saturar el RPM de Google
+            await asyncio.sleep(2)
+
+        except Exception as e:
+            # intento con modelo local si la IA falla (ej: límite de tokens)
+            print(f"Límite de IA alcanzado. Usando modelo local rápido para {news.get('_id')}...")
+            
+            input_data = [text_to_analyze]
+            if vectorizer:
+                input_data = vectorizer.transform(input_data)
+                
+            # se usa predict_proba en lugar de predict para obtener la confianza de la predicción
+            proba = real_model.predict_proba(input_data)[0]
+            
+            # Identificación de clases para asegurar que tomamos la probabilidad correcta
+            if hasattr(real_model, "classes_"):
+                clases = list(real_model.classes_)
+                try:
+                    indice_clase_falsa = clases.index(1)
+                    indice_clase_verdadera = clases.index(0)
+                except ValueError:
+                    indice_clase_falsa = 1 if len(clases) > 1 else 0
+                    indice_clase_verdadera = 0
+            else:
+                indice_clase_falsa = 1
+                indice_clase_verdadera = 0
+                
+            false_prob = proba[indice_clase_falsa] if len(proba) > indice_clase_falsa else max(proba)
+            true_prob = proba[indice_clase_verdadera] if len(proba) > indice_clase_verdadera else 1 - false_prob
+            
+            final_score = round(float(true_prob) * 100)
+            classification = "falsa" if false_prob >= 0.5 else "verdadera"
+
+        # 3. Preparamos la orden de actualización
+        operations.append(
+            UpdateOne(
+                {"_id": news["_id"]},
+                {"$set": {
+                    "classification": classification,
+                    "credibilityScore": final_score
+                }}
+            )
+        )
+            
+    # Guardado masivo en la DB
+    if operations:
+        result = await db.top_news.bulk_write(operations)
+        print(f"Clasificación terminada. Noticias procesadas y guardadas: {result.modified_count}")
 
 @app.get("/api/data")
 async def get_data():
