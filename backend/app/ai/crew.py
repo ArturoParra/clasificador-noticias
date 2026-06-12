@@ -1,6 +1,7 @@
 from crewai import Agent, Task, Crew, Process
 # from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_tavily import TavilySearch # versión de la comunidad
+# from langchain_tavily import TavilySearch # versión de la comunidad
+from langchain_community.tools.tavily_search import TavilySearchResults
 from crewai.tools import tool # decorador nativo de CrewAI
 import os
 
