@@ -7,10 +7,10 @@ interface FilterBarProps {
 
 const categories: { value: NewsCategory; label: string }[] = [
   { value: 'all', label: 'Todas las Noticias' },
-  { value: 'real', label: 'Verdaderas' },
-   { value: 'fake', label: 'Falsas' },
+  { value: 'verdadera', label: 'Verdaderas' },
+   { value: 'falsa', label: 'Falsas' },
   /*{ value: 'satire', label: 'Sátira' }, */
-  { value: 'misleading', label: 'Engañosas' },
+  { value: 'engañosa', label: 'Engañosas' },
 ];
 
 export function FilterBar({ selectedCategory, onCategoryChange }: FilterBarProps) {

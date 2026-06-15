@@ -57,7 +57,7 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState<NewsCategory>('all');
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
-    text: '',
+    text: ''/*,
     language: '',
     country: '',
     category: '',
@@ -66,6 +66,7 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
     sourceDomain: '',
     credibilityMin: 0,
     credibilityMax: 100,
+    */
   });
 
   // Effects for persistence
