@@ -3,6 +3,7 @@ from crewai import Agent, Task, Crew, Process
 # from langchain_tavily import TavilySearch # versión de la comunidad
 from langchain_community.tools.tavily_search import TavilySearchResults
 from crewai.tools import tool # decorador nativo de CrewAI
+from datetime import datetime # para manejo de fechas en el análisis de noticias
 import os
 
 # Definimos la herramienta afuera de la función con el decorador de CrewAI
@@ -19,6 +20,8 @@ def search_tool(query: str) -> str:
 
 # funcion para analisis de la noticia desplegando la tripulación de CrewAI
 def execute_crew_research(news_text: str) -> str:
+
+    fecha_actual = datetime.now().strftime("%A, %d de %B de %Y") # obtenemos la fecha actual para contextualizar la búsqueda de noticias recientes
 
     # inicializacion del LLM de Google GenAI (configurado con la API Key en las variables de entorno)
     """
@@ -91,7 +94,8 @@ def execute_crew_research(news_text: str) -> str:
     )
 
     consistency_judge_task = Task(
-        description='Revisa los hechos documentados de la investigación, las URLs proporcionadas por el investigador y el reporte de estilo del analista. ' \
+        description=f'CRÍTICO - CONTEXTO TEMPORAL: Hoy es {fecha_actual}. Al evaluar los hechos , '\
+        'ten en cuenta esta fecha real. Revisa los hechos documentados de la investigación, las URLs proporcionadas por el investigador y el reporte de estilo del analista. ' \
         'Determina si la noticia es: Verdadera, Falsa, Engañosa o Sátira. CRÍTICO: Evalúa la confiabilidad de las URLs; si la fuente es un sitio de sátira conocido, márcala como Sátira. Si la fuente es dudosa ' \
         'y contradice los hechos reales, márcala como Falsa. Justifica tu respuesta mencionando explícitamente la calidad de las fuentes ' \
         'e incluye una puntuación de credibilidad del 0 al 100.',

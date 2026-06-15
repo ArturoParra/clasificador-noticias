@@ -20,6 +20,7 @@ import asyncio
 from pymongo import UpdateOne
 from bs4 import BeautifulSoup
 import uuid # para generar IDs únicos si es necesario en la función de búsqueda, aunque MongoDB ya genera ObjectId automáticamente
+from urllib.parse import urlparse # para mostrar metadatos de la URL en el frontend
 
 load_dotenv()
 
@@ -29,6 +30,26 @@ scheduler = AsyncIOScheduler()
 modelo = None
 umbral_precision_alta = 0.5
 MODO_PREDICCION = "balanceado"
+
+# Funcion de comprobacion antes de soltar a los agentes
+async def verify_tavily_credits() -> bool:
+    # Hace un ping ultraligero a Tavily para ver si tenemos tokens vivos.
+    api_key = os.getenv("TAVILY_API_KEY")
+    if not api_key:
+        return False
+        
+    url = "https://api.tavily.com/search"
+    payload = {"query": "test", "api_key": api_key, "max_results": 1}
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload) as response:
+                # Si Tavily responde con 400, 401 o 403, no hay créditos o la llave es inválida
+                if response.status >= 400:
+                    return False
+                return True
+    except:
+        return False
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -263,6 +284,12 @@ async def classify_unclassified_news():
         
         try:
             # uso de IA para clasificación, con respaldo de modelo local en caso de error (ej: límite de tokens)
+            # 1. El portero verifica los tokens de internet primero
+            has_credits = await verify_tavily_credits()
+            if not has_credits:
+                raise Exception("Tavily API sin créditos. Abortando IA para evitar alucinaciones.")
+
+            # 2. uso de IA para clasificación...
             print(f"[{index + 1}/{total_news}] Intentando IA para: {news.get('_id')}")
             ai_result = await execute_analysis(text_to_analyze)
             classification = ai_result["verdict"].lower()
@@ -468,6 +495,32 @@ async def analyze_external_url(request: URLRequest):
                 html = await response.text()
                 soup = BeautifulSoup(html, 'html.parser')
 
+                # Extraccion de fuente y fecha
+                # Se captura el nombre de la fuente con dos planes de extracción para maximizar la compatibilidad con diferentes sitios:
+                og_site_name = soup.find('meta', property='og:site_name')
+                if og_site_name and og_site_name.get('content'):
+                    source_name = og_site_name['content']
+                else:
+                    # Si no hay etiqueta, extraemos el dominio (ej. "elfinanciero.com.mx")
+                    parsed_uri = urlparse(request.url)
+                    source_name = parsed_uri.netloc.replace('www.', '')
+
+                # Captura de la fecha de publicación (Date)
+                article_date = "Fecha desconocida"
+                # Buscamos en las etiquetas meta más utilizadas por el periodismo
+                meta_date = soup.find('meta', property='article:published_time') or \
+                            soup.find('meta', attrs={'name': 'pubdate'}) or \
+                            soup.find('meta', itemprop='datePublished')
+                            
+                if meta_date and meta_date.get('content'):
+                    # Recortamos la cadena para obtener solo AAAA-MM-DD (ignoramos la hora)
+                    article_date = meta_date['content'].split('T')[0]
+                else:
+                    # Busqueda de una etiqueta <time> visible
+                    time_tag = soup.find('time')
+                    if time_tag and time_tag.has_attr('datetime'):
+                        article_date = time_tag['datetime'].split('T')[0]
+
                 # Extraccion del titulo y los primeros 5 parrafos
                 title = soup.title.string if soup.title else "Noticia externa sin titulo"
                 all_paragraphs = soup.find_all('p')
@@ -497,16 +550,20 @@ async def analyze_external_url(request: URLRequest):
                 vectorizer = val
 
     try:
-        # Primero se intenta con los agentes de IA
+        # El portero verifica los tokens de internet primero
+        has_credits = await verify_tavily_credits()
+        if not has_credits:
+            raise Exception("Tavily API sin créditos. Abortando IA para evitar alucinaciones.")
         print("Enviando URL a los agentes de IA...")
         ai_result = await execute_analysis(text_to_analyze)
         classification = ai_result["verdict"].lower()
         final_score = ai_result["score"]
         used_engine = "IA_Agentes"
     except Exception as e:
-        # Si la IA falla, se procede con el modelo local como respaldo
-        print("IA ocupada/sin tokens. Usando modelo local para la URL...")
+        print(f"Cambio de motor detectado: {str(e)}")
+        print("IA ocupada/sin tokens. Usando modelo local de respaldo para la URL...")
         used_engine = "Modelo_Local_Respaldo"
+
         input_data = [text_to_analyze]
         if vectorizer:
             input_data = vectorizer.transform(input_data)
@@ -535,13 +592,16 @@ async def analyze_external_url(request: URLRequest):
         "title": title,
         "description": body[:150] + "...",
         "content": body,               # Agregado para la vista de detalles
+        "summary": body[:150] + "...", # Resumen simple basado por si NewsGrid lo necesita
         "classification": classification,
         "credibilityScore": final_score,
         "engine": used_engine,
         "image": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800",
         "url": request.url,
-        "source": "Enlace Externo",    # Agregado para el Badge
-        "date": "Justo ahora"          # Agregado para el subtítulo
+        "source": source_name,    # Agregado para el Badge
+        "date": article_date,          # Agregado para el subtítulo
+        "publish_date": article_date,  # Por compatibilidad con el frontend que espera publish_date
+        "category": "general" # critico para los filtros del frontend
     }
 
 @app.post("/api/test-fetch")
