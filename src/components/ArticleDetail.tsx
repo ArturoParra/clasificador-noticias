@@ -47,6 +47,7 @@ export function ArticleDetail() {
   }
 
   // Generate fallback content if missing
+  /*
   const content = article.content || `
     <p class="mb-4 text-lg leading-relaxed">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
     <p class="mb-4 text-lg leading-relaxed">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
@@ -55,7 +56,7 @@ export function ArticleDetail() {
     <blockquote class="border-l-4 border-gray-500 pl-4 italic my-8 text-xl font-light">"Esta es una cita importante relacionada con la noticia que añade contexto y credibilidad a la narración."</blockquote>
     <p class="mb-4 text-lg leading-relaxed">Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
   `;
-
+*/
   return (
     <div className={`min-h-screen transition-colors duration-500 ${isDarkMode ? 'bg-gray-950 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
       

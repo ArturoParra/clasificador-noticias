@@ -1,5 +1,5 @@
 import type { NewsCategory } from '../types/types';
-import { ShieldCheck, ShieldAlert, Laugh, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, /*ShieldAlert,*/ Laugh, AlertTriangle } from 'lucide-react';
 
 interface CredibilityBadgeProps {
   classification: Exclude<NewsCategory, 'all'>;
