@@ -18,6 +18,8 @@ export function ArticleDetail() {
 
   const backLink = location.state?.from || '/feed';
 
+  console.log(article)
+
   const handleBookmark = () => {
     if (id) {
       toggleBookmark(id);
@@ -131,7 +133,7 @@ export function ArticleDetail() {
                <div>
                  <p className={`font-medium text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>Escrito por</p>
                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                   {article.source} Team
+                   {article.source}
                  </p>
                </div>
             </div>
@@ -154,8 +156,11 @@ export function ArticleDetail() {
           <div className="md:col-span-2 space-y-6">
             <div 
               className={`prose prose-lg max-w-none ${isDarkMode ? 'prose-invert' : 'prose-gray'}`}
-              dangerouslySetInnerHTML={{ __html: content }} 
             />
+
+            <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+              {article.description}
+            </p>
             
             <div className={`mt-12 p-6 rounded-xl border ${
               isDarkMode ? 'bg-gray-900/50 border-gray-800' : 'bg-white border-gray-200'
@@ -164,11 +169,8 @@ export function ArticleDetail() {
                 <ExternalLink className="w-4 h-4" />
                 Fuente Original
               </h3>
-              <p className={`text-sm mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Este artículo fue analizado desde {article.source}. Puedes visitar la fuente original para verificar la información.
-              </p>
               <Button variant="outline" className={`w-full sm:w-auto ${isDarkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : ''}`}>
-                Visitar {article.source}
+                <a href={article.url} target="_blank" rel="noopener noreferrer" className="sr-only">Visitar fuente original</a>
               </Button>
             </div>
           </div>

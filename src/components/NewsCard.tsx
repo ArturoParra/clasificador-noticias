@@ -50,10 +50,10 @@ export function NewsCard({ article, onClick, isDarkMode, isFavorite, onToggleFav
           {article.title}
         </h3>
         
-        <p className={`text-sm mb-4 line-clamp-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+        {/* <p className={`text-sm mb-4 line-clamp-3 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           {article.description}
         </p>
-        
+         */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>

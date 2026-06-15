@@ -6,6 +6,7 @@ import { ApiHandler } from '../services/ApiHandler.ts';
 
 interface NewsContextType {
   articles: NewsArticle[];
+  setArticles: React.Dispatch<React.SetStateAction<NewsArticle[]>>;
   bookmarks: string[];
   toggleBookmark: (id: string) => void;
   isBookmarked: (id: string) => boolean;
@@ -56,7 +57,7 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState<NewsCategory>('all');
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
-    text: '',
+    text: ''/*,
     language: '',
     country: '',
     category: '',
@@ -65,6 +66,7 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
     sourceDomain: '',
     credibilityMin: 0,
     credibilityMax: 100,
+    */
   });
 
   // Effects for persistence
@@ -98,6 +100,7 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
   return (
     <NewsContext.Provider value={{
       articles,
+      setArticles,
       loading,
       refresh: fetchNews,
       bookmarks,

@@ -33,21 +33,15 @@ export function NewsGrid({ selectedCategory, isDarkMode, searchFilters, showOnly
     console.log(filtered)
     console.log(articles)
 
-    /* // Favorites filter
+    // Favorites filter
     if (showOnlyFavorites) {
       filtered = filtered.filter(article => bookmarks.includes(article.id));
     }
 
     // Category filter
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(article => article.category === selectedCategory);
+      filtered = filtered.filter(article => article.classification === selectedCategory);
     }
-
-    // Credibility filter
-    filtered = filtered.filter(article => 
-      article.credibilityScore >= searchFilters.credibilityMin &&
-      article.credibilityScore <= searchFilters.credibilityMax
-    );
 
     // Text search filter
     if (searchFilters.text) {
@@ -58,26 +52,6 @@ export function NewsGrid({ selectedCategory, isDarkMode, searchFilters, showOnly
       );
     }
 
-    // Source domain filter
-    if (searchFilters.sourceDomain) {
-      const domainLower = searchFilters.sourceDomain.toLowerCase();
-      filtered = filtered.filter(article =>
-        article.source.toLowerCase().includes(domainLower)
-      );
-    }
-
-    // Date range filters
-    if (searchFilters.dateFrom) {
-      filtered = filtered.filter(article => 
-        new Date(article.date) >= new Date(searchFilters.dateFrom)
-      );
-    }
-    if (searchFilters.dateTo) {
-      filtered = filtered.filter(article => 
-        new Date(article.date) <= new Date(searchFilters.dateTo)
-      );
-    }
- */
     console.log(filtered)
 
     return filtered;

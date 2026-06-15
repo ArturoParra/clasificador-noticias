@@ -10,9 +10,10 @@ interface HeaderProps {
   onToggleTheme: () => void;
   selectedCategory: NewsCategory;
   onCategoryChange: (category: NewsCategory) => void;
+  onExternalArticleAnalyzed?: (article: any) => void; // Callback para cuando se analiza un artículo externo
 }
 
-export function Header({ onSearch, isDarkMode, onToggleTheme, selectedCategory, onCategoryChange }: HeaderProps) {
+export function Header({ onSearch, isDarkMode, onToggleTheme, selectedCategory, onCategoryChange, onExternalArticleAnalyzed }: HeaderProps) {
   const { bookmarks } = useNews();
   const favoritesCount = bookmarks.length;
 
@@ -31,14 +32,14 @@ export function Header({ onSearch, isDarkMode, onToggleTheme, selectedCategory, 
     }`}>
       <div className="max-w-7xl mx-auto px-4 py-6 pb-2">
         <div className="flex items-center justify-between mb-6">
-          <Link to="/feed" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <ShieldCheck className={`size-8 transition-colors duration-300 ${
               isDarkMode ? 'text-white' : 'text-black'
             }`} />
             <div>
               <h1 className={`text-3xl font-bold transition-colors duration-300 ${
                 isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>TruthScore Noticias</h1>
+              }`}>VeritasCop</h1>
               <p className={`text-sm transition-colors duration-300 ${
                 isDarkMode ? 'text-gray-400' : 'text-gray-600'
               }`}>Análisis de Credibilidad de Noticias con IA</p>
@@ -99,6 +100,7 @@ export function Header({ onSearch, isDarkMode, onToggleTheme, selectedCategory, 
           isDarkMode={isDarkMode}
           selectedCategory={selectedCategory}
           onCategoryChange={onCategoryChange}
+          onExternalArticleAnalyzed={onExternalArticleAnalyzed} // Pasamos el callback al componente de búsqueda avanzada
         />
       </div>
     </header>

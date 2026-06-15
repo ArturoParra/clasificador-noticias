@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -15,6 +16,11 @@ from apscheduler.triggers.cron import CronTrigger
 import pytz
 import joblib
 import numpy as np
+import asyncio
+from pymongo import UpdateOne
+from bs4 import BeautifulSoup
+import uuid # para generar IDs únicos si es necesario en la función de búsqueda, aunque MongoDB ya genera ObjectId automáticamente
+from urllib.parse import urlparse # para mostrar metadatos de la URL en el frontend
 
 load_dotenv()
 
@@ -24,6 +30,26 @@ scheduler = AsyncIOScheduler()
 modelo = None
 umbral_precision_alta = 0.5
 MODO_PREDICCION = "balanceado"
+
+# Funcion de comprobacion antes de soltar a los agentes
+async def verify_tavily_credits() -> bool:
+    # Hace un ping ultraligero a Tavily para ver si tenemos tokens vivos.
+    api_key = os.getenv("TAVILY_API_KEY")
+    if not api_key:
+        return False
+        
+    url = "https://api.tavily.com/search"
+    payload = {"query": "test", "api_key": api_key, "max_results": 1}
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload) as response:
+                # Si Tavily responde con 400, 401 o 403, no hay créditos o la llave es inválida
+                if response.status >= 400:
+                    return False
+                return True
+    except:
+        return False
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -91,12 +117,13 @@ def serialize_news(news):
         "title": news.get("title", ""),
         "description": news.get("description", ""),
         "url": news.get("url", ""),
-        "publishedAt": news.get("publishedAt", ""),
+        "publish_date": news.get("publish_date", news.get("publishedAt", "")),
         "source": news.get("source", ""),
         "image": news.get("image", ""),
         "category": news.get("category", ""),
         "classification": news.get("classification", "none"),
-        "credibilityScore": news.get("credibilityScore", 0)
+        "credibilityScore": news.get("credibilityScore", 0),
+        "summary": news.get("summary", ""),
     }
 
 async def fetch_and_save_top_news():
@@ -107,7 +134,9 @@ async def fetch_and_save_top_news():
         "api-key": os.getenv("WORLD_NEWS_API_KEY"), 
         "source-country": "mx",
         "language": "es", 
-        "max-news-per-cluster": 10
+        "max-news-per-cluster": 1,
+        "headlines-only": "false",
+        "date": datetime.now().strftime("%Y-%m-%d")
     }
 
     try:
@@ -136,9 +165,10 @@ async def fetch_and_save_top_news():
                         news_doc = {
                             "title": article.get("title", ""),
                             "description": article.get("text", ""), # World News usa 'text' o 'summary'
+                            "summary": article.get("summary", ""),
                             "url": article.get("url", ""),
-                            "publishedAt": article.get("publish_date", ""), # API usa 'publish_date'
-                            "source": article.get("source_country", ""), # API no anida source.name normalmente
+                            "publish_date": article.get("publish_date", ""),
+                            "source": article.get("author", ""), # API no anida source.name normalmente
                             "image": article.get("image", ""), # API usa 'image' directamente
                             "category": "general",
                             "classification": "none",
@@ -162,57 +192,34 @@ async def fetch_and_save_top_news():
     except Exception as e:
         print(f"Excepción obteniendo noticias: {e}")
 
+"""
 async def classify_unclassified_news():
-    print("Iniciando clasificación de noticias sin procesar...")
+    print("Iniciando clasificación con agentes de IA...")
     
     # 1. Obtener las noticias que no han sido clasificadas
-    cursor = db.top_news.find({"classification": "none"})
+    cursor = db.top_news.find({"classification": "none"}).limit(3) # limite de rpm para evitar saturar la API de Google Gemini
     unclassified_news = await cursor.to_list(length=None)
     
     if not unclassified_news:
         print("No hay noticias pendientes por clasificar.")
         return
 
+    total_news = len(unclassified_news)
+    print(f"Se encontraron {total_news} noticias...")
     operations = []
-    
-    # Extraer el modelo real si 'modelo' es un diccionario (e.g. guardado como {"modelo": clf})
-    real_model = modelo
-    vectorizer = None
-    if isinstance(modelo, dict):
-        # Buscar el modelo principal identificando el que tiene el método 'predict'
-        for key, val in modelo.items():
-            if hasattr(val, "predict"):
-                real_model = val
-            elif hasattr(val, "transform") and not hasattr(val, "predict"):
-                # Si hay un objeto que solo tiene transform, podria ser un vectorizador o tfidf
-                vectorizer = val
 
-    for news in unclassified_news:
-        # 2. Configurar el texto a analizar
+    for index, news in enumerate(unclassified_news):
         text_to_analyze = f"{news.get('title', '')} {news.get('description', '')}"
         
         try:
-            # Procesar el texto si hay un vectorizer aislado en el diccionario
-            input_data = [text_to_analyze]
-            if vectorizer:
-                input_data = vectorizer.transform(input_data)
-                
-            # 3. Hacer la predicción
-            prediction = real_model.predict(input_data)[0]
+            print(f"[{index + 1}/{total_news}] Desplegando agentes para: {news.get('_id')}")
             
-            # Obtener probabilidad o score si el modelo lo soporta
-            if hasattr(real_model, "predict_proba"):
-                probabilities = real_model.predict_proba(input_data)[0]
-                # Tomar la clase positiva (índice 1) si es binario:
-                credibilidad = probabilities[1] if len(probabilities) > 1 else max(probabilities)
-                credibility_score = round(float(credibilidad) * 100)
-                classification = "reliable" if prediction == 1 else "unreliable"
-            else:
-                # Fallback
-                credibility_score = float(prediction) * 100 if float(prediction) <= 1.0 else float(prediction)
-                # Asumir umbral de 50 si el score es continuo
-                classification = "reliable" if credibility_score > 50 else "unreliable"
-                
+            # Envio exclusivo a CrewAI
+            ai_result = await execute_analysis(text_to_analyze)
+            classification = ai_result["verdict"].lower()
+            credibility_score = ai_result["score"]
+
+            # Preparamos la orden de actualizacion para MongoDB
             operations.append(
                 UpdateOne(
                     {"_id": news["_id"]},
@@ -222,14 +229,132 @@ async def classify_unclassified_news():
                     }}
                 )
             )
+
+            # Si no es la última noticia de la lista, hacemos una pausa para enfriar la API
+            if index < total_news - 1:
+                tiempo_espera = 30  # 30 segundos de pausa entre cada noticia
+                print(f"Pausando {tiempo_espera}s para enfriar la cuota de Google Gemini...")
+                await asyncio.sleep(tiempo_espera)
+
         except Exception as e:
-            print(f"Error al predecir la noticia {news.get('_id')}: {e}")
+            print(f"Error al procesar la noticia {news.get('_id')}: {e}")
+            # Si aún con la pausa Google nos lanza el Error 429, rompemos el ciclo
+            # para no seguir fallando y guardamos lo que ya se logró procesar.
+            if "429" in str(e):
+                print("Límite de API alcanzado. Deteniendo el procesamiento por ahora.")
+                break
             
     # 4. Actualizar la base de datos masivamente
     if operations:
         result = await db.top_news.bulk_write(operations)
-        print(f"Clasificación terminada. Noticias actualizadas: {result.modified_count}")
+        print(f"Lote terminado. Noticias analizadas exclusivamente por IA: {result.modified_count}")
+"""
 
+async def classify_unclassified_news():
+    print("Iniciando clasificación masiva (Arquitectura Híbrida)...")
+    
+    # Traemos todas las noticias pendientes
+    cursor = db.top_news.find({"classification": "none"})
+    unclassified_news = await cursor.to_list(length=None)
+    
+    if not unclassified_news:
+        print("No hay noticias pendientes. ¡La base de datos está al día!")
+        return
+
+    operations = []
+    # nueva variable para el lote de noticias antes del guardado de seguridad
+    BATCH_SIZE = 50
+    total_news = len(unclassified_news)
+    saved_news_count = 0
+    print(f"Se evaluarán {total_news} noticias.")
+    
+    # Preparamos el modelo local por si la IA se queda sin tokens
+    real_model = modelo
+    vectorizer = None
+    if isinstance(modelo, dict):
+        for key, val in modelo.items():
+            if hasattr(val, "predict"):
+                real_model = val
+            elif hasattr(val, "transform") and not hasattr(val, "predict"):
+                vectorizer = val
+
+    # Procesamiento de las noticias
+    for index, news in enumerate(unclassified_news):
+        text_to_analyze = f"{news.get('title', '')} {news.get('description', '')}"
+        
+        try:
+            # uso de IA para clasificación, con respaldo de modelo local en caso de error (ej: límite de tokens)
+            # 1. El portero verifica los tokens de internet primero
+            has_credits = await verify_tavily_credits()
+            if not has_credits:
+                raise Exception("Tavily API sin créditos. Abortando IA para evitar alucinaciones.")
+
+            # 2. uso de IA para clasificación...
+            print(f"[{index + 1}/{total_news}] Intentando IA para: {news.get('_id')}")
+            ai_result = await execute_analysis(text_to_analyze)
+            classification = ai_result["verdict"].lower()
+            final_score = ai_result["score"]
+            used_engine = "IA_Agentes"
+
+            # Pequeña pausa para no saturar el RPM de Google
+            await asyncio.sleep(2)
+
+        except Exception as e:
+            # intento con modelo local si la IA falla (ej: límite de tokens)
+            print(f"Límite de IA alcanzado. Usando modelo local rápido para {news.get('_id')}...")
+            used_engine = "Modelo_Local_Respaldo"
+            
+            input_data = [text_to_analyze]
+            if vectorizer:
+                input_data = vectorizer.transform(input_data)
+                
+            # se usa predict_proba en lugar de predict para obtener la confianza de la predicción
+            proba = real_model.predict_proba(input_data)[0]
+            
+            # Identificación de clases para asegurar que tomamos la probabilidad correcta
+            if hasattr(real_model, "classes_"):
+                clases = list(real_model.classes_)
+                try:
+                    indice_clase_falsa = clases.index(1)
+                    indice_clase_verdadera = clases.index(0)
+                except ValueError:
+                    indice_clase_falsa = 1 if len(clases) > 1 else 0
+                    indice_clase_verdadera = 0
+            else:
+                indice_clase_falsa = 1
+                indice_clase_verdadera = 0
+                
+            false_prob = proba[indice_clase_falsa] if len(proba) > indice_clase_falsa else max(proba)
+            true_prob = proba[indice_clase_verdadera] if len(proba) > indice_clase_verdadera else 1 - false_prob
+            
+            final_score = round(float(true_prob) * 100)
+            classification = "falsa" if false_prob >= 0.5 else "verdadera"
+
+        # 3. Preparamos la orden de actualización
+        operations.append(
+            UpdateOne(
+                {"_id": news["_id"]},
+                {"$set": {
+                    "classification": classification,
+                    "credibilityScore": final_score,
+                    "engine": used_engine
+                }}
+            )
+        )
+
+        # checkpoint de guardado cada cierto número de noticias
+        if len(operations) >= BATCH_SIZE:
+            await db.top_news.bulk_write(operations)
+            saved_news_count += len(operations)
+            print(f"¡Punto de control! {saved_news_count}/{total_news} noticias aseguradas en MongoDB.")
+            operations = [] # Limpieza de la memoria para el siguiente lote
+            
+    # Guardado masivo en la DB
+    if operations:
+        await db.top_news.bulk_write(operations)
+        saved_news_count += len(operations)
+
+    print(f"Clasificación terminada. Noticias procesadas y guardadas: {saved_news_count}")
 
 @app.get("/api/data")
 async def get_data():
@@ -247,40 +372,238 @@ async def analyze_news_endpoint(news_id: str):
     """
     Se toma una noticia de la DB por su ID para procesarla con LangGraph + CrewAI 
     y actualizar su clasificacion
+
+    Se evalúa primero con el modelo local .pkl
+    Si la credibilidad es <= 60, se despliega la arquitectura de agentes
     """
     if not ObjectId.is_valid(news_id):
         raise HTTPException(status_code=400, detail="ID de noticia inválido")
 
     # busqueda de la noticia en la DB
-    documento = await db.top_news.find_one({"_id": ObjectId(news_id)})
-    if not documento:
+    document = await db.top_news.find_one({"_id": ObjectId(news_id)})
+    if not document:
         raise HTTPException(status_code=404, detail="Noticia no encontrada")
 
     # construccion del texto
-    text_to_analyze = f"{documento.get('title', '')}. {documento.get('description', '')}"
+    text_to_analyze = f"{document.get('title', '')}. {document.get('description', '')}"
 
     try:
-        # Ejecucion de la arquitectura de agentes (LangGraph + CrewAI)
-        # idealmente esta función debería ser asíncrona o correr en un hilo separado
-        ai_result = await execute_analysis(text_to_analyze)
+        # Evaluacion con modelo local
+        if modelo is None:
+            raise HTTPException(status_code=503, detail="El modelo local aún no está cargado.")
+        # Extraccion del modelo y vectorizador
+        real_model = modelo
+        vectorizer = None
+        if isinstance(modelo, dict):
+            for key, val in modelo.items():
+                if hasattr(val, "predict"):
+                    real_model = val
+                elif hasattr(val, "transform") and not hasattr(val, "predict"):
+                    vectorizer = val
 
+        input_data = [text_to_analyze]
+        if vectorizer:
+            input_data = vectorizer.transform(input_data)
+
+        # calculo de probabilidad o score
+        proba = real_model.predict_proba(input_data)[0]
+
+        #identificacion de clases
+        if hasattr(real_model, "classes_"):
+            clases = list(real_model.classes_)
+            try:
+                indice_clase_falsa = clases.index(1)
+                indice_clase_verdadera = clases.index(0)
+            except ValueError:
+                indice_clase_falsa = 1 if len(clases) > 1 else 0
+                indice_clase_verdadera = 0
+        else:
+            indice_clase_falsa = 1
+            indice_clase_verdadera = 0
+
+        prob_falsa = proba[indice_clase_falsa] if len(proba) > indice_clase_falsa else max(proba)
+        prob_verdadera = proba[indice_clase_verdadera] if len(proba) > indice_clase_verdadera else 1 - prob_falsa
+
+        # Conversion de la probabilidad a un puntaje de 0 a 100
+        puntaje_local = round(float(prob_verdadera) * 100)
+
+            # Decisión del modelo local
+        if MODO_PREDICCION == "alta_precision":
+            prediccion_numerica = int(prob_falsa >= umbral_precision_alta)
+        else:
+            prediccion_numerica = int(prob_falsa >= 0.5)
+            
+        clasificacion_local = "falsa" if prediccion_numerica == 1 else "verdadera"
+
+        # enrutador condicional
+        if puntaje_local <= 60:
+            # Puntuación baja: Entra la arquitectura de Agentes LLM
+            ai_result = await execute_analysis(text_to_analyze)
+            veredicto_final = ai_result["verdict"].lower()
+            score_final = ai_result["score"]
+            motor_utilizado = "Agentes_LLM_LangGraph"
+        else:
+            # Puntuación alta: Confiamos en el modelo local
+            veredicto_final = clasificacion_local
+            score_final = puntaje_local
+            motor_utilizado = "Modelo_Local_PKL"
+
+        # Actualizacion en la DB
         await db.top_news.update_one(
             {"_id": ObjectId(news_id)},
             {"$set": {
-                "classification": ai_result["verdict"].lower(),
-                "credibilityScore": ai_result["score"]
+                "classification": veredicto_final,
+                "credibilityScore": score_final
             }}
         )
 
         return {
             "message": "Análisis completado",
             "news_id": news_id,
-            "classification": ai_result["verdict"].lower(),
-            "score": ai_result["score"]
+            "classification": veredicto_final,
+            "score": score_final,
+            "motor": motor_utilizado 
         }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en análisis con el módulo de IA: {str(e)}")
+
+# nuevo endpoint para clasificacion de URLs
+class URLRequest(BaseModel):
+    url: str # se define el esquema de entrada para recibir una URL a analizar
+
+# endpoint de análisis de URL externas
+@app.post("/api/analyze-external")
+async def analyze_external_url(request: URLRequest):
+    print(f"Analizando URL externa: {request.url}")
+    try:
+        # scrapping de la pagina para extraer el texto
+        # para dicho scrapping, se enmascara el user-agent para evitar bloqueos básicos de algunos sitios web
+        # esto definiendo las siguientes cabeceras
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+        }
+
+        # pasamos las cabeceras a la sesion de aiohttp para el scrapping
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.get(request.url) as response:
+                # Verificamos que el sitio nos haya dejado entrar (Código 200)
+                response.raise_for_status()
+
+                html = await response.text()
+                soup = BeautifulSoup(html, 'html.parser')
+
+                # Extraccion de fuente y fecha
+                # Se captura el nombre de la fuente con dos planes de extracción para maximizar la compatibilidad con diferentes sitios:
+                og_site_name = soup.find('meta', property='og:site_name')
+                if og_site_name and og_site_name.get('content'):
+                    source_name = og_site_name['content']
+                else:
+                    # Si no hay etiqueta, extraemos el dominio (ej. "elfinanciero.com.mx")
+                    parsed_uri = urlparse(request.url)
+                    source_name = parsed_uri.netloc.replace('www.', '')
+
+                # Captura de la fecha de publicación (Date)
+                article_date = "Fecha desconocida"
+                # Buscamos en las etiquetas meta más utilizadas por el periodismo
+                meta_date = soup.find('meta', property='article:published_time') or \
+                            soup.find('meta', attrs={'name': 'pubdate'}) or \
+                            soup.find('meta', itemprop='datePublished')
+                            
+                if meta_date and meta_date.get('content'):
+                    # Recortamos la cadena para obtener solo AAAA-MM-DD (ignoramos la hora)
+                    article_date = meta_date['content'].split('T')[0]
+                else:
+                    # Busqueda de una etiqueta <time> visible
+                    time_tag = soup.find('time')
+                    if time_tag and time_tag.has_attr('datetime'):
+                        article_date = time_tag['datetime'].split('T')[0]
+
+                # Extraccion del titulo y los primeros 5 parrafos
+                title = soup.title.string if soup.title else "Noticia externa sin titulo"
+                all_paragraphs = soup.find_all('p')
+
+                # Filtramos solo guardando los que tengan texto real (más de 40 caracteres)
+                valid_paragraphs = [
+                    p.get_text(strip=True) 
+                    for p in all_paragraphs 
+                    if len(p.get_text(strip=True)) > 40
+                ]
+                
+                # tomamos los primeros 5 parrafos validos y los unimos
+                body = " ".join(valid_paragraphs[:5]) # Limitar a los primeros 5 parrafos para no saturar la IA
+
+                text_to_analyze = f"{title}. {body}"
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al extraer texto de la URL: {str(e)}")
+
+    # llamado a la arquitectura de clasificacion hibrida sin persistencia en DB
+    real_model = modelo
+    vectorizer = None
+    if isinstance(modelo, dict):
+        for key, val in modelo.items():
+            if hasattr(val, "predict"):
+                real_model = val
+            elif hasattr(val, "transform") and not hasattr(val, "predict"):
+                vectorizer = val
+
+    try:
+        # El portero verifica los tokens de internet primero
+        has_credits = await verify_tavily_credits()
+        if not has_credits:
+            raise Exception("Tavily API sin créditos. Abortando IA para evitar alucinaciones.")
+        print("Enviando URL a los agentes de IA...")
+        ai_result = await execute_analysis(text_to_analyze)
+        classification = ai_result["verdict"].lower()
+        final_score = ai_result["score"]
+        used_engine = "IA_Agentes"
+    except Exception as e:
+        print(f"Cambio de motor detectado: {str(e)}")
+        print("IA ocupada/sin tokens. Usando modelo local de respaldo para la URL...")
+        used_engine = "Modelo_Local_Respaldo"
+
+        input_data = [text_to_analyze]
+        if vectorizer:
+            input_data = vectorizer.transform(input_data)
+        
+        proba = real_model.predict_proba(input_data)[0]
+        
+        # logica para identificar correctamente las clases y sus probabilidades
+        if hasattr(real_model, "classes_"):
+            clases = list(real_model.classes_)
+            indice_clase_falsa = clases.index(1) if 1 in clases else 1
+            indice_clase_verdadera = clases.index(0) if 0 in clases else 0
+        else:
+            indice_clase_falsa, indice_clase_verdadera = 1, 0
+            
+        false_prob = proba[indice_clase_falsa] if len(proba) > indice_clase_falsa else max(proba)
+        true_prob = proba[indice_clase_verdadera] if len(proba) > indice_clase_verdadera else 1 - false_prob
+        
+        final_score = round(float(true_prob) * 100)
+        classification = "falsa" if false_prob >= 0.5 else "verdadera"
+
+    # Se devuelve la respuesta con las claves exactas que espera el frontend
+    external_id = f"external-{uuid.uuid4()}"
+    return {
+        "id": external_id,             # Cambiado de _id a id
+        "_id": external_id,            # Por si MongoDB lo requiere internamente
+        "title": title,
+        "description": body[:150] + "...",
+        "content": body,               # Agregado para la vista de detalles
+        "summary": body[:150] + "...", # Resumen simple basado por si NewsGrid lo necesita
+        "classification": classification,
+        "credibilityScore": final_score,
+        "engine": used_engine,
+        "image": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800",
+        "url": request.url,
+        "source": source_name,    # Agregado para el Badge
+        "date": article_date,          # Agregado para el subtítulo
+        "publish_date": article_date,  # Por compatibilidad con el frontend que espera publish_date
+        "category": "general" # critico para los filtros del frontend
+    }
+
 @app.post("/api/test-fetch")
 async def test_fetch_news():
     """Endpoint de prueba para disparar manualmente la consulta"""

@@ -235,7 +235,7 @@ export function LandingPage({
                   isDarkMode ? "text-white" : "text-black"
                 }`}
               >
-                TruthScore Noticias
+                VeritasCop
               </h1>
               <Sparkles
                 className={`size-6 ${isDarkMode ? "text-white" : "text-black"}`}
@@ -334,13 +334,6 @@ export function LandingPage({
                           >
                             {topCredibilityNews[mainCurrentIndex].title}
                           </h3>
-                          <p
-                            className={`text-base sm:text-lg ${
-                              isDarkMode ? "text-gray-400" : "text-gray-600"
-                            }`}
-                          >
-                            {topCredibilityNews[mainCurrentIndex].description}
-                          </p>
                           <div className="flex items-center gap-4">
                             <span
                               className={`text-sm ${
