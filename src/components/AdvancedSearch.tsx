@@ -56,7 +56,7 @@ const credibilityCategories: { value: NewsCategory; label: string }[] = [
   { value: 'all', label: 'Todas' },
   { value: 'verdadera', label: 'Verdaderas' },
   { value: 'falsa', label: 'Falsas' },
-  { value: 'sarcástica', label: 'Sátira' },
+  { value: 'sátira', label: 'Sátira' },
   { value: 'engañosa', label: 'Engañosas' },
 ];
 

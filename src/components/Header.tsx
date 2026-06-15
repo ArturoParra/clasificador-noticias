@@ -31,7 +31,7 @@ export function Header({ onSearch, isDarkMode, onToggleTheme, selectedCategory, 
     }`}>
       <div className="max-w-7xl mx-auto px-4 py-6 pb-2">
         <div className="flex items-center justify-between mb-6">
-          <Link to="/feed" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <ShieldCheck className={`size-8 transition-colors duration-300 ${
               isDarkMode ? 'text-white' : 'text-black'
             }`} />

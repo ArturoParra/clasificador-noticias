@@ -62,7 +62,7 @@ export function CredibilityBadge({ classification, score, size = 'md' }: Credibi
   };
 
   return (
-    <div className={`${config.bgColor} ${config.textColor} ${config.borderColor || ''} ${sizeClasses[size]} rounded-full flex items-center gap-1.5 font-semibold shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-110`}>
+    <div className={`${config.bgColor} ${config.textColor} ${config.borderColor || ''} ${sizeClasses[size]} rounded-full flex items-center gap-1.5 font-semibold shadow-xl backdrop-blur-sm transition-all duration-300`}>
       <Icon className={iconSizes[size]} />
       <span>{config.label}</span>
       {score !== undefined && <span className="opacity-80 ml-1">| {score}%</span>}
