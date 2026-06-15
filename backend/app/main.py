@@ -17,6 +17,8 @@ import joblib
 import numpy as np
 import asyncio
 from pymongo import UpdateOne
+from bs4 import BeautifulSoup
+import uuid # para generar IDs únicos si es necesario en la función de búsqueda, aunque MongoDB ya genera ObjectId automáticamente
 
 load_dotenv()
 
@@ -401,7 +403,7 @@ async def analyze_news_endpoint(news_id: str):
             
         clasificacion_local = "falsa" if prediccion_numerica == 1 else "verdadera"
 
-        # --- 2. ENRUTADOR CONDICIONAL ---
+        # enrutador condicional
         if puntaje_local <= 60:
             # Puntuación baja: Entra la arquitectura de Agentes LLM
             ai_result = await execute_analysis(text_to_analyze)
@@ -433,6 +435,95 @@ async def analyze_news_endpoint(news_id: str):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error en análisis con el módulo de IA: {str(e)}")
+
+# nuevo endpoint para clasificacion de URLs
+class URLRequest(BaseModel):
+    url: str # se define el esquema de entrada para recibir una URL a analizar
+
+# endpoint de análisis de URL externas
+@app.post("/api/analyze-external")
+async def analyze_external_url(request: URLRequest):
+    print(f"Analizando URL externa: {request.url}")
+    try:
+        # scrapping de la pagina para extraer el texto
+        # para dicho scrapping, se enmascara el user-agent para evitar bloqueos básicos de algunos sitios web
+        # esto definiendo las siguientes cabeceras
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+        }
+
+        # pasamos las cabeceras a la sesion de aiohttp para el scrapping
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.get(request.url) as response:
+                # Verificamos que el sitio nos haya dejado entrar (Código 200)
+                response.raise_for_status()
+
+                html = await response.text()
+                soup = BeautifulSoup(html, 'html.parser')
+
+                # Extraccion del titulo y los primeros 5 parrafos
+                title = soup.title.string if soup.title else "Noticia externa sin titulo"
+                paragraphs = soup.find_all('p')
+                body = " ".join([p.get_text() for p in paragraphs[:5]]) # Limitar a los primeros 5 parrafos para no saturar la IA
+
+                text_to_analyze = f"{title}. {body}"
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al extraer texto de la URL: {str(e)}")
+
+    # llamado a la arquitectura de clasificacion hibrida sin persistencia en DB
+    real_model = modelo
+    vectorizer = None
+    if isinstance(modelo, dict):
+        for key, val in modelo.items():
+            if hasattr(val, "predict"):
+                real_model = val
+            elif hasattr(val, "transform") and not hasattr(val, "predict"):
+                vectorizer = val
+
+    try:
+        # Primero se intenta con los agentes de IA
+        print("Enviando URL a los agentes de IA...")
+        ai_result = await execute_analysis(text_to_analyze)
+        classification = ai_result["verdict"].lower()
+        final_score = ai_result["score"]
+        used_engine = "IA_Agentes"
+    except Exception as e:
+        # Si la IA falla, se procede con el modelo local como respaldo
+        print("IA ocupada/sin tokens. Usando modelo local para la URL...")
+        used_engine = "Modelo_Local_Respaldo"
+        input_data = [text_to_analyze]
+        if vectorizer:
+            input_data = vectorizer.transform(input_data)
+        
+        proba = real_model.predict_proba(input_data)[0]
+        
+        # logica para identificar correctamente las clases y sus probabilidades
+        if hasattr(real_model, "classes_"):
+            clases = list(real_model.classes_)
+            indice_clase_falsa = clases.index(1) if 1 in clases else 1
+            indice_clase_verdadera = clases.index(0) if 0 in clases else 0
+        else:
+            indice_clase_falsa, indice_clase_verdadera = 1, 0
+            
+        false_prob = proba[indice_clase_falsa] if len(proba) > indice_clase_falsa else max(proba)
+        true_prob = proba[indice_clase_verdadera] if len(proba) > indice_clase_verdadera else 1 - false_prob
+        
+        final_score = round(float(true_prob) * 100)
+        classification = "falsa" if false_prob >= 0.5 else "verdadera"
+
+    # Se devuelve la respuesta sin guardar nada en la DB, ya que es un análisis puntual de una URL externa
+    return {
+        "_id": f"external-{uuid.uuid4()}", # ID falso/temporal para evitar errores con React Query que espera un ID
+        "title": title,
+        "description": body[:150] + "...",
+        "classification": classification,
+        "credibilityScore": final_score,
+        "engine": used_engine,
+        "image": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800", # Imagen genérica de periódico
+        "url": request.url
+    }
 
 @app.post("/api/test-fetch")
 async def test_fetch_news():

@@ -9,7 +9,8 @@ export function NewsFeed() {
     selectedCategory,
     setSelectedCategory,
     searchFilters,
-    setSearchFilters
+    setSearchFilters,
+    setArticles // funcion que actualiza el estado global con el artículo analizado
   } = useNews();
 
   return (
@@ -20,6 +21,10 @@ export function NewsFeed() {
         onToggleTheme={toggleTheme}
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
+        // Pasamos la función para actualizar el estado global con el artículo analizado
+        onExternalArticleAnalyzed={newArticle => {
+          setArticles(prevArticles => [newArticle, ...prevArticles]);
+        }}  
       />
       <main className="max-w-7xl mx-auto px-4 py-8">
         <NewsGrid 

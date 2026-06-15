@@ -7,6 +7,7 @@ interface AdvancedSearchProps {
   isDarkMode: boolean;
   selectedCategory: NewsCategory;
   onCategoryChange: (category: NewsCategory) => void;
+  onExternalArticleAnalyzed?: (article: any) => void; // Callback para cuando se analiza un artículo externo
 }
 
 /* const languages = [
@@ -56,16 +57,18 @@ const credibilityCategories: { value: NewsCategory; label: string }[] = [
   { value: 'all', label: 'Todas' },
   { value: 'verdadera', label: 'Verdaderas' },
   { value: 'falsa', label: 'Falsas' },
-  { value: 'sarcástica', label: 'Sátira' },
+  { value: 'sátira', label: 'Sátira' },
   { value: 'engañosa', label: 'Engañosas' },
 ];
 
-export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCategoryChange }: AdvancedSearchProps) {
+export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCategoryChange, onExternalArticleAnalyzed }: AdvancedSearchProps) {
   const [isExpanded, /* setIsExpanded */] = useState(false);
   const [isFloating, setIsFloating] = useState(false);
   const [searchBarHeight, setSearchBarHeight] = useState(0);
   const searchBarRef = useRef<HTMLDivElement>(null);
   const [originalTopPosition, setOriginalTopPosition] = useState(0);
+  // nuevo estado para saber si esperamos a la IA
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
     text: '',
   });
@@ -103,8 +106,44 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
     }
   }, [isExpanded]);
 
-  const handleSearch = () => {
-    onSearch(filters);
+  // Intercepcion de la busqueda para activar el estado de análisis
+  const handleSearch = async () => {
+    const searchText = filters.text.trim();
+    if(!searchText) return;
+    
+    const isUrl = searchText.startsWith('http://') || searchText.startsWith('https://');
+
+    if (isUrl) {
+      // Es una URL externa
+      setIsAnalyzing(true);
+      try {
+        const response = await fetch('http://localhost:8000/api/analyze-external', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: searchText }),
+        });
+        
+        if (response.ok) {
+          const externalArticle = await response.json();
+          // Limpieza del buscador
+          setFilters({ text: '' });
+          // Le avisamos al padre que tenemos una noticia nueva
+          if (onExternalArticleAnalyzed) {
+            onExternalArticleAnalyzed(externalArticle);
+          }
+        } else {
+          alert("Error al analizar la URL. Verifique la validez del enlace.");
+        }
+      } catch (error) {
+        console.error('Error analizando la URL externa:', error);
+        alert("Falla de conexión con el servidor de análisis.");
+      } finally {
+        setIsAnalyzing(false);
+      }
+    } else {
+      // Es texto normal, usamos el buscador tradicional
+      onSearch(filters);
+    }
   };
 
   /* const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
@@ -178,7 +217,7 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
               }`} />
               <input
                 type="text"
-                placeholder="Buscar noticias..."
+                placeholder="Busque noticias o ingrese una URL externa para analizar..."
                 value={filters.text}
                 onChange={(e) => setFilters({ ...filters, text: e.target.value })}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -218,9 +257,17 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
                   isDarkMode
                     ? 'bg-white text-black hover:bg-gray-200'
                     : 'bg-black text-white hover:bg-gray-800'
-                }`}
+                }disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                Buscar
+                {/* Indicador visual de carga */}
+                {isAnalyzing ? (
+                  <>
+                    <div className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    <span>Analizando...</span>
+                  </>
+                ) : (
+                  <>Buscar</>
+                )}
               </button>
             </div>
           </div>

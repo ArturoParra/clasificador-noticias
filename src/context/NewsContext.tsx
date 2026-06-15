@@ -6,6 +6,7 @@ import { ApiHandler } from '../services/ApiHandler.ts';
 
 interface NewsContextType {
   articles: NewsArticle[];
+  setArticles: React.Dispatch<React.SetStateAction<NewsArticle[]>>;
   bookmarks: string[];
   toggleBookmark: (id: string) => void;
   isBookmarked: (id: string) => boolean;
@@ -98,6 +99,7 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
   return (
     <NewsContext.Provider value={{
       articles,
+      setArticles,
       loading,
       refresh: fetchNews,
       bookmarks,
