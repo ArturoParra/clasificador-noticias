@@ -19,4 +19,6 @@ export interface NewsArticle {
   credibilityScore: number;
   content?: string;
   analysis: AnalysisFactor[];
+  summary?: string;
+  url: string;
 }

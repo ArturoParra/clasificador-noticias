@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -100,7 +101,8 @@ def serialize_news(news):
         "image": news.get("image", ""),
         "category": news.get("category", ""),
         "classification": news.get("classification", "none"),
-        "credibilityScore": news.get("credibilityScore", 0)
+        "credibilityScore": news.get("credibilityScore", 0),
+        "summary": news.get("summary", ""),
     }
 
 async def fetch_and_save_top_news():
@@ -111,7 +113,9 @@ async def fetch_and_save_top_news():
         "api-key": os.getenv("WORLD_NEWS_API_KEY"), 
         "source-country": "mx",
         "language": "es", 
-        "max-news-per-cluster": 10
+        "max-news-per-cluster": 1,
+        "headlines-only": "false",
+        "date": datetime.now().strftime("%Y-%m-%d")
     }
 
     try:
@@ -140,9 +144,10 @@ async def fetch_and_save_top_news():
                         news_doc = {
                             "title": article.get("title", ""),
                             "description": article.get("text", ""), # World News usa 'text' o 'summary'
+                            "summary": article.get("summary", ""),
                             "url": article.get("url", ""),
                             "publish_date": article.get("publish_date", ""),
-                            "source": article.get("source_country", ""), # API no anida source.name normalmente
+                            "source": article.get("author", ""), # API no anida source.name normalmente
                             "image": article.get("image", ""), # API usa 'image' directamente
                             "category": "general",
                             "classification": "none",
