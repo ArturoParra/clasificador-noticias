@@ -465,8 +465,17 @@ async def analyze_external_url(request: URLRequest):
 
                 # Extraccion del titulo y los primeros 5 parrafos
                 title = soup.title.string if soup.title else "Noticia externa sin titulo"
-                paragraphs = soup.find_all('p')
-                body = " ".join([p.get_text() for p in paragraphs[:5]]) # Limitar a los primeros 5 parrafos para no saturar la IA
+                all_paragraphs = soup.find_all('p')
+
+                # Filtramos solo guardando los que tengan texto real (más de 40 caracteres)
+                valid_paragraphs = [
+                    p.get_text(strip=True) 
+                    for p in all_paragraphs 
+                    if len(p.get_text(strip=True)) > 40
+                ]
+                
+                # tomamos los primeros 5 parrafos validos y los unimos
+                body = " ".join(valid_paragraphs[:5]) # Limitar a los primeros 5 parrafos para no saturar la IA
 
                 text_to_analyze = f"{title}. {body}"
     except Exception as e:
@@ -513,16 +522,21 @@ async def analyze_external_url(request: URLRequest):
         final_score = round(float(true_prob) * 100)
         classification = "falsa" if false_prob >= 0.5 else "verdadera"
 
-    # Se devuelve la respuesta sin guardar nada en la DB, ya que es un análisis puntual de una URL externa
+    # Se devuelve la respuesta con las claves exactas que espera el frontend
+    external_id = f"external-{uuid.uuid4()}"
     return {
-        "_id": f"external-{uuid.uuid4()}", # ID falso/temporal para evitar errores con React Query que espera un ID
+        "id": external_id,             # Cambiado de _id a id
+        "_id": external_id,            # Por si MongoDB lo requiere internamente
         "title": title,
         "description": body[:150] + "...",
+        "content": body,               # Agregado para la vista de detalles
         "classification": classification,
         "credibilityScore": final_score,
         "engine": used_engine,
-        "image": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800", # Imagen genérica de periódico
-        "url": request.url
+        "image": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800",
+        "url": request.url,
+        "source": "Enlace Externo",    # Agregado para el Badge
+        "date": "Justo ahora"          # Agregado para el subtítulo
     }
 
 @app.post("/api/test-fetch")
