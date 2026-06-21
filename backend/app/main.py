@@ -559,6 +559,7 @@ async def analyze_external_url(request: URLRequest):
         classification = ai_result["verdict"].lower()
         final_score = ai_result["score"]
         used_engine = "IA_Agentes"
+
     except Exception as e:
         print(f"Cambio de motor detectado: {str(e)}")
         print("IA ocupada/sin tokens. Usando modelo local de respaldo para la URL...")
@@ -584,6 +585,8 @@ async def analyze_external_url(request: URLRequest):
         final_score = round(float(true_prob) * 100)
         classification = "falsa" if false_prob >= 0.5 else "verdadera"
 
+        fecha_analisis_exacta = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     # Se devuelve la respuesta con las claves exactas que espera el frontend
     external_id = f"external-{uuid.uuid4()}"
     return {
@@ -599,7 +602,7 @@ async def analyze_external_url(request: URLRequest):
         "image": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800",
         "url": request.url,
         "source": source_name,    # Agregado para el Badge
-        "date": article_date,          # Agregado para el subtítulo
+        "date": fecha_analisis_exacta,          # Agregado para el subtítulo
         "publish_date": article_date,  # Por compatibilidad con el frontend que espera publish_date
         "category": "general" # critico para los filtros del frontend
     }
