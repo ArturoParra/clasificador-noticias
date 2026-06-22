@@ -75,7 +75,10 @@ export function NewsCard({ article, onClick, isDarkMode, isFavorite, onToggleFav
           </div>
           <div className="flex items-center gap-1">
             <TrendingUp className="size-3" />
-            <span>{article.source}</span>
+            {/* Si article.source está vacío, imprime un texto por defecto */}
+            <span className="truncate max-w-[120px]">
+              {article.source || "Agencia Externa"}
+            </span>
           </div>
         </div>
       </div>

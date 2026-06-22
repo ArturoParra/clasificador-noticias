@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, /* ChevronDown, ChevronUp, X */ } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import type { NewsCategory, SearchFilters } from '../types/types';
 
 interface AdvancedSearchProps {
@@ -109,7 +109,10 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
   // Intercepcion de la busqueda para activar el estado de análisis
   const handleSearch = async () => {
     const searchText = filters.text.trim();
-    if(!searchText) return;
+    if (!searchText) {
+      onSearch({ text: '' });
+      return;
+    }
     
     const isUrl = searchText.startsWith('http://') || searchText.startsWith('https://');
 
@@ -219,14 +222,38 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
                 type="text"
                 placeholder="Busque noticias o ingrese una URL externa para analizar..."
                 value={filters.text}
-                onChange={(e) => setFilters({ ...filters, text: e.target.value })}
+                onChange={(e) => {
+                  const text = e.target.value;
+                  setFilters({ ...filters, text });
+
+                  if (text.trim() === '') {
+                    onSearch({ text: '' });
+                  }
+                }}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className={`w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-300 text-sm sm:text-base ${
+                className={`w-full pl-9 sm:pl-10 pr-10 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-300 text-sm sm:text-base ${
                   isDarkMode
                     ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500 focus:ring-white focus:border-white'
                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-black focus:border-black'
                 }`}
               />
+              {filters.text.trim() && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters({ text: '' });
+                    onSearch({ text: '' });
+                  }}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md transition-colors duration-300 ${
+                    isDarkMode
+                      ? 'text-gray-400 hover:text-white hover:bg-gray-800'
+                      : 'text-gray-500 hover:text-black hover:bg-gray-100'
+                  }`}
+                  aria-label="Limpiar búsqueda"
+                >
+                  <X className="size-4 sm:size-5" />
+                </button>
+              )}
             </div>
             <div className="flex gap-2">
               {/* <button

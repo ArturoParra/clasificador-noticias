@@ -107,6 +107,7 @@ def execute_crew_research(news_text: str) -> str:
     crew = Crew(
         agents=[researcher, linguistic_analyst, consistency_judge],
         tasks=[research_task, linguistic_analysis_task, consistency_judge_task],
+        max_rpm=4,
         process=Process.sequential # Ejecución en cascada
     )
 
