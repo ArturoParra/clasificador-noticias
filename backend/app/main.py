@@ -585,7 +585,7 @@ async def analyze_external_url(request: URLRequest):
         final_score = round(float(true_prob) * 100)
         classification = "falsa" if false_prob >= 0.5 else "verdadera"
 
-        fecha_analisis_exacta = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    fecha_analisis_exacta = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Se devuelve la respuesta con las claves exactas que espera el frontend
     external_id = f"external-{uuid.uuid4()}"
