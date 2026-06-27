@@ -472,6 +472,9 @@ async def analyze_news_endpoint(news_id: str):
 class URLRequest(BaseModel):
     url: str # se define el esquema de entrada para recibir una URL a analizar
 
+class ClaimRequest(BaseModel):
+    claim: str
+
 # endpoint de análisis de URL externas
 @app.post("/api/analyze-external")
 async def analyze_external_url(request: URLRequest):
@@ -605,6 +608,51 @@ async def analyze_external_url(request: URLRequest):
         "date": fecha_analisis_exacta,          # Agregado para el subtítulo
         "publish_date": article_date,  # Por compatibilidad con el frontend que espera publish_date
         "category": "general" # critico para los filtros del frontend
+    }
+
+# endpoint para analisis de afirmaciones (ideas/claims)
+@app.post("/api/analyze-claim")
+async def analyze_claim(request: ClaimRequest):
+    print(f"Analizando afirmación: {request.claim}")
+    
+    claim = request.claim.strip()
+    if not claim:
+        raise HTTPException(status_code=400, detail="La afirmación no puede estar vacía.")
+    
+    try:
+        has_credits = await verify_tavily_credits()
+        if not has_credits:
+            raise Exception("Tavily API sin créditos. Abortando IA para evitar alucinaciones.")
+        
+        print("Enviando afirmación a los agentes de IA...")
+        ai_result = await execute_analysis(claim)
+        verdict = ai_result["verdict"].lower()
+        score = ai_result["score"]
+        summary = ai_result.get("summary", "")
+        evidence = ai_result.get("evidence", [])
+        used_engine = "IA_Agentes"
+        
+    except Exception as e:
+        print(f"Error en análisis con agentes: {str(e)}")
+        raise HTTPException(status_code=503, detail=f"No se pudo completar el análisis: {str(e)}")
+    
+    fecha_analisis = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    return {
+        "id": f"claim-{uuid.uuid4()}",
+        "claim": claim,
+        "title": f"Análisis: ¿{claim[:80]}?" if len(claim) > 80 else f"Análisis: ¿{claim}?",
+        "description": summary[:200] if summary else "Análisis completado por agentes de IA.",
+        "classification": verdict if verdict != "none" else "none",
+        "credibilityScore": score,
+        "summary": summary,
+        "evidence_urls": evidence,
+        "source": "VeritasCop IA",
+        "date": fecha_analisis,
+        "engine": used_engine,
+        "image": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800",
+        "url": "",
+        "category": "general"
     }
 
 @app.post("/api/test-fetch")

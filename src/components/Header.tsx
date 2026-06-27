@@ -10,10 +10,11 @@ interface HeaderProps {
   onToggleTheme: () => void;
   selectedCategory: NewsCategory;
   onCategoryChange: (category: NewsCategory) => void;
-  onExternalArticleAnalyzed?: (article: any) => void; // Callback para cuando se analiza un artículo externo
+  onExternalArticleAnalyzed?: (article: any) => void;
+  onVerifyClaim?: (claim: string) => void;
 }
 
-export function Header({ onSearch, isDarkMode, onToggleTheme, selectedCategory, onCategoryChange, onExternalArticleAnalyzed }: HeaderProps) {
+export function Header({ onSearch, isDarkMode, onToggleTheme, selectedCategory, onCategoryChange, onExternalArticleAnalyzed, onVerifyClaim }: HeaderProps) {
   const { bookmarks } = useNews();
   const favoritesCount = bookmarks.length;
 
@@ -100,7 +101,8 @@ export function Header({ onSearch, isDarkMode, onToggleTheme, selectedCategory, 
           isDarkMode={isDarkMode}
           selectedCategory={selectedCategory}
           onCategoryChange={onCategoryChange}
-          onExternalArticleAnalyzed={onExternalArticleAnalyzed} // Pasamos el callback al componente de búsqueda avanzada
+          onExternalArticleAnalyzed={onExternalArticleAnalyzed}
+          onVerifyClaim={onVerifyClaim}
         />
       </div>
     </header>

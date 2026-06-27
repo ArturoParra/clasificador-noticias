@@ -43,6 +43,11 @@ export const ApiHandler = {
             classification: item.classification || 'none',
             credibilityScore: item.credibilityScore || 0
         }));
+    },
+
+    analyzeClaim: async (claim: string) => {
+        const response = await apiClient.post('/api/analyze-claim', { claim });
+        return response.data;
     }
 
 }

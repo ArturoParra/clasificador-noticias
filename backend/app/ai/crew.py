@@ -83,7 +83,7 @@ def execute_crew_research(news_text: str) -> str:
     # definicion de las tareas
     research_task = Task(
         description=f'Busca evidencia que confirme o refute esta noticia: "{news_text}". Extrae los hechos clave.',
-        expected_output='Un resumen de los hechos verificables encontrados.',
+        expected_output='Un resumen de los hechos verificables encontrados. Incluye una sección "FUENTES ENCONTRADAS:" con las URLs de cada fuente utilizada.',
         agent=researcher
     )
 
@@ -99,7 +99,7 @@ def execute_crew_research(news_text: str) -> str:
         'Determina si la noticia es: Verdadera, Falsa, Engañosa o Sátira. CRÍTICO: Evalúa la confiabilidad de las URLs; si la fuente es un sitio de sátira conocido, márcala como Sátira. Si la fuente es dudosa ' \
         'y contradice los hechos reales, márcala como Falsa. Justifica tu respuesta mencionando explícitamente la calidad de las fuentes ' \
         'e incluye una puntuación de credibilidad del 0 al 100.',
-        expected_output='Un veredicto final justificado (mencionando las URLs), la categoría (Verdadera, Falsa, Engañosa o Sátira) y la puntuación de credibilidad (ej. 85).',
+        expected_output='Un veredicto final estructurado con: 1) RESUMEN: explicación breve del análisis. 2) VEREDICTO: Verdadera, Falsa, Engañosa o Sátira. 3) PUNTUACIÓN: X/100. 4) EVIDENCIA: lista de URLs utilizadas como fuentes.',
         agent=consistency_judge
     )
 
