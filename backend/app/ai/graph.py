@@ -113,5 +113,6 @@ async def execute_analysis(news_text: str):
         "verdict": result["verdict"],
         "score": result["score"],
         "summary": result.get("summary", ""),
-        "evidence": result.get("evidence", [])
+        "evidence": result.get("evidence", []),
+        "report": result.get("crew_report", "")
     }
