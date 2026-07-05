@@ -19,6 +19,7 @@ export interface NewsArticle {
   credibilityScore: number;
   engine?: string; // Campo opcional para indicar el motor de análisis utilizado
   ai_report?: string; // Campo opcional para el reporte de IA
+  claim?: string; // Campo opcional para la afirmación de la noticia ingresada por el usuario
   content?: string;
   analysis: AnalysisFactor[];
   summary?: string;

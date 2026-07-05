@@ -18,6 +18,9 @@ interface NewsContextType {
   setSelectedCategory: (category: NewsCategory) => void;
   loading: boolean;
   refresh: () => void;
+  claims: NewsArticle[];
+  setClaims: React.Dispatch<React.SetStateAction<NewsArticle[]>>;
+  refreshClaims: () => void;
 }
 
 const NewsContext = createContext<NewsContextType | undefined>(undefined);
@@ -38,6 +41,7 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
   // Articles state (could be fetched, currently mock)
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [claims, setClaims] = useState<NewsArticle[]>([]); // estado para almacenar las afirmaciones
 
   const fetchNews = async () => {
       try {
@@ -50,8 +54,20 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
+    const fetchClaims = async () => {
+    try {
+      // método getClaims() creado en el ApiHandler.ts
+      const data = await ApiHandler.getClaims(); 
+      setClaims(data);
+      console.log('Fetched claims:', data);
+    } catch (error) {
+      console.error('Failed to fetch claims:', error);
+    }
+  };
+
   useEffect(() => {
     fetchNews();
+    fetchClaims(); // Llamamos a fetchClaims() para obtener las afirmaciones
   }, []);
 
   // Filter states
@@ -111,7 +127,10 @@ export const NewsProvider = ({ children }: { children: ReactNode }) => {
       searchFilters,
       setSearchFilters,
       selectedCategory,
-      setSelectedCategory
+      setSelectedCategory,
+      claims,
+      setClaims,
+      refreshClaims: fetchClaims
     }}>
       {children}
     </NewsContext.Provider>

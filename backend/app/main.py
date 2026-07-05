@@ -371,6 +371,16 @@ async def get_news():
     
     return [serialize_news(item) for item in items]
 
+@app.get("/api/claims")
+async def get_claims():
+    # Buscamos en la nueva colección
+    cursor = db.claims.find({}).sort("date", -1) # Ordenamos por fecha, más recientes primero
+    items = await cursor.to_list(None)
+    
+    # Podemos reusar serialize_news si los campos son compatibles, 
+    # o crear una función pequeña serialize_claim si difieren mucho.
+    return [serialize_news(item) for item in items]
+
 @app.post("/api/news/{news_id}/analyze")
 async def analyze_news_endpoint(news_id: str):
     """
@@ -640,6 +650,9 @@ async def analyze_claim(request: ClaimRequest):
         summary = ai_result.get("summary", "")
         evidence = ai_result.get("evidence", [])
         used_engine = "IA_Agentes"
+
+        #captura del reporte
+        ai_report = ai_result.get("report", "Reporte detallado no disponible.")
         
     except Exception as e:
         print(f"Error en análisis con agentes: {str(e)}")
@@ -647,7 +660,8 @@ async def analyze_claim(request: ClaimRequest):
     
     fecha_analisis = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    return {
+    # armado del diccionario de resultados
+    claim_data =  {
         "id": f"claim-{uuid.uuid4()}",
         "claim": claim,
         "title": f"Análisis: ¿{claim[:80]}?" if len(claim) > 80 else f"Análisis: ¿{claim}?",
@@ -661,8 +675,16 @@ async def analyze_claim(request: ClaimRequest):
         "engine": used_engine,
         "image": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800",
         "url": "",
-        "category": "general"
+        "category": "general",
+        "ai_report": ai_report
     }
+
+    # se procede a guardar en MongoDB a traves de una nueva seccion exclusiva para afirmaciones
+    # se crea una copia para inyectarle el _id propio de Mongo
+    db_document = claim_data.copy()
+    await db.claims.insert_one(db_document)
+
+    return claim_data
 
 @app.post("/api/test-fetch")
 async def test_fetch_news():

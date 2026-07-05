@@ -11,7 +11,7 @@ import os
 def search_tool(query: str) -> str:
     """Util para buscar información en internet sobre noticias, hechos y eventos actuales. Requiere un texto de busqueda."""
     tavily_engine = TavilySearchResults(
-        max_results=5,
+        max_results=1, # anteriormente 5, pero para optimizar costos y tiempo de respuesta se reduce a 1
         search_depth="advanced",
         include_raw_content=True
     )
@@ -83,7 +83,8 @@ def execute_crew_research(news_text: str) -> str:
     # definicion de las tareas
     research_task = Task(
         description=f'Busca evidencia que confirme o refute esta noticia: "{news_text}". Extrae los hechos clave.',
-        expected_output='Un resumen de los hechos verificables encontrados. Incluye una sección "FUENTES ENCONTRADAS:" con las URLs de cada fuente utilizada.',
+        expected_output='Un resumen de los hechos verificables encontrados. REGLA ESTRICTA: Incluye ÚNICAMENTE UNA (1) URL principal en la sección "FUENTES ENCONTRADAS".' \
+        'Incluye una sección "FUENTE ENCONTRADA:" con la URL de la fuente utilizada.',
         agent=researcher
     )
 
@@ -99,7 +100,7 @@ def execute_crew_research(news_text: str) -> str:
         'Determina si la noticia es: Verdadera, Falsa, Engañosa o Sátira. CRÍTICO: Evalúa la confiabilidad de las URLs; si la fuente es un sitio de sátira conocido, márcala como Sátira. Si la fuente es dudosa ' \
         'y contradice los hechos reales, márcala como Falsa. Justifica tu respuesta mencionando explícitamente la calidad de las fuentes ' \
         'e incluye una puntuación de credibilidad del 0 al 100.',
-        expected_output='Un veredicto final estructurado con: 1) RESUMEN: explicación breve del análisis. 2) VEREDICTO: Verdadera, Falsa, Engañosa o Sátira. 3) PUNTUACIÓN: X/100. 4) EVIDENCIA: lista de URLs utilizadas como fuentes.',
+        expected_output='Un veredicto final estructurado con: 1) RESUMEN: explicación breve del análisis. 2) VEREDICTO: Verdadera, Falsa, Engañosa o Sátira. 3) PUNTUACIÓN: X/100. 4) EVIDENCIA: ÚNICAMENTE UNA (1) URL de respaldo. PROHIBIDO LISTAR MÁS DE UNA.',
         agent=consistency_judge
     )
 

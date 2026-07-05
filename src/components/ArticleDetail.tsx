@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useLocation } from 'react-router';
-import { ArrowLeft, Share2, Bookmark, ExternalLink, Calendar, User, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, Share2, Bookmark, ExternalLink, Calendar, User, Sun, Moon, MessageSquare } from 'lucide-react';
 import { useNews } from '../context/NewsContext';
 import { CredibilityBadge } from './CredibilityBadge';
 import { AnalysisBreakdown } from './AnalysisBreakdown';
@@ -159,6 +159,31 @@ export function ArticleDetail() {
             <div 
               className={`prose prose-lg max-w-none ${isDarkMode ? 'prose-invert' : 'prose-gray'}`}
             />
+
+            {/* ---> Tarjeta para la afimracion ingresada por el usuario <--- */}
+            {article.claim && (
+              <div className={`p-6 rounded-2xl border shadow-sm flex gap-4 items-start ${
+                isDarkMode ? 'bg-indigo-950/30 border-indigo-900/50' : 'bg-indigo-50 border-indigo-100'
+              }`}>
+                <div className={`p-3 rounded-full shrink-0 ${
+                  isDarkMode ? 'bg-indigo-900/50 text-indigo-400' : 'bg-indigo-200/50 text-indigo-600'
+                }`}>
+                  <MessageSquare className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${
+                    isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}>
+                    Idea a verificar
+                  </h3>
+                  <p className={`text-xl font-medium leading-relaxed italic ${
+                    isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                  }`}>
+                    "{article.claim}"
+                  </p>
+                </div>
+              </div>
+            )}
 
             <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               {article.description}
