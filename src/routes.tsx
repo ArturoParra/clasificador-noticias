@@ -4,6 +4,7 @@ import { NewsFeed } from "./components/NewsFeed";
 import { ArticleDetail } from "./components/ArticleDetail";
 import { LandingPageWrapper } from "./components/LandingPageWrapper";
 import { SavedArticles } from "./components/SavedArticles";
+import { ClaimsFeed } from "./components/ClaimsFeed";
 
 export const router = createBrowserRouter([
   {
@@ -14,6 +15,7 @@ export const router = createBrowserRouter([
       { path: "feed", Component: NewsFeed },
       { path: "saved", Component: SavedArticles },
       { path: "article/:id", Component: ArticleDetail },
+      { path: "/afirmaciones", element: <ClaimsFeed /> },
     ],
   },
 ]);

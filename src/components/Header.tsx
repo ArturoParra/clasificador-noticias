@@ -1,4 +1,4 @@
-import { ShieldCheck, Sun, Moon, Bookmark } from 'lucide-react';
+import { ShieldCheck, Sun, Moon, Bookmark, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router';
 import { AdvancedSearch } from './AdvancedSearch';
 import type { SearchFilters, NewsCategory } from '../types/types';
@@ -48,6 +48,19 @@ export function Header({ onSearch, isDarkMode, onToggleTheme, selectedCategory, 
           </Link>
           
           <div className="flex items-center gap-2">
+            <Link to="/afirmaciones">
+              <div className={`relative px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-2 ${
+                isDarkMode
+                  ? 'bg-indigo-900/30 border border-indigo-800 hover:bg-indigo-800/80 text-indigo-300 hover:text-indigo-100'
+                  : 'bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700'
+              }`}>
+                <MessageSquare className="size-5" />
+                <span className="text-sm font-bold hidden sm:inline">
+                  Verificaciones
+                </span>
+              </div>
+            </Link>
+
             {/* Favorites Counter */}
             <Link to="/saved">
               <div className={`relative px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-2 ${
