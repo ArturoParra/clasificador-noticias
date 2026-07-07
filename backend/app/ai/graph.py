@@ -10,6 +10,8 @@ class NewsState(TypedDict):
     verdict: str
     score: int
     iteration_count: int
+    summary: str
+    evidence: List[str]
 
 # funciones de los nodos del grafo
 def crew_node(state: NewsState):
@@ -42,8 +44,33 @@ def evaluation_node(state: NewsState):
         match_backup = re.search(r'credibilidad.*?(\d{1,3})', report_lower)
         if match_backup:
             score = int(match_backup.group(1))
+
+    # Extracción del resumen: primer párrafo significativo (> 80 caracteres)
+    summary = ""
+    paragraphs = re.split(r'\n\s*\n', report.strip())
+    for para in paragraphs:
+        clean = para.strip()
+        if len(clean) > 80:
+            summary = clean[:500]
+            break
+
+    # Extracción de URLs de evidencia (dominios de noticias/sitios web)
+    evidence_urls = []
+    url_pattern = re.compile(r'https?://[^\s\)\]}>"\']+')
+    raw_urls = url_pattern.findall(report)
+    seen = set()
+    for url in raw_urls:
+        cleaned = url.rstrip('.,;:!?)')
+        if cleaned not in seen:
+            seen.add(cleaned)
+            evidence_urls.append(cleaned)
     
-    return {"verdict": final_verdict, "score": score}
+    return {
+        "verdict": final_verdict,
+        "score": score,
+        "summary": summary,
+        "evidence": evidence_urls
+    }
 
 def evaluar_ciclo(state: NewsState):
     # Si falta evidencia, se regresaría a investigar más a fondo (reiterar el ciclo de CrewAI)
@@ -74,7 +101,9 @@ async def execute_analysis(news_text: str):
         "crew_report": "",
         "verdict": "none",
         "score": 0,
-        "iteration_count": 0
+        "iteration_count": 0,
+        "summary": "",
+        "evidence": []
     }
     
     # ainvoke procesa el grafo de manera asíncrona
@@ -82,5 +111,8 @@ async def execute_analysis(news_text: str):
     
     return {
         "verdict": result["verdict"],
-        "score": result["score"]
+        "score": result["score"],
+        "summary": result.get("summary", ""),
+        "evidence": result.get("evidence", []),
+        "report": result.get("crew_report", "")
     }

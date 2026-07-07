@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+//import type { NewsArticle } from '../data/mockNews.ts';
 
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
@@ -43,6 +44,22 @@ export const ApiHandler = {
             classification: item.classification || 'none',
             credibilityScore: item.credibilityScore || 0
         }));
+    },
+
+    analyzeClaim: async (claim: string) => {
+        const response = await apiClient.post('/api/analyze-claim', { claim });
+        return response.data;
+    },
+
+   getClaims: async () => {
+        const response = await apiClient.get('/api/claims');
+        // Mapeamos los datos igual que las noticias para evitar errores en la interfaz
+        return response.data.map((item: any) => ({
+            ...item,
+            date: item.publish_date || item.publishedAt || item.date || '',
+            classification: item.classification || 'none',
+            credibilityScore: item.credibilityScore || 0
+        }));
     }
 
-}
+};

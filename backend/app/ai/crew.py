@@ -11,7 +11,7 @@ import os
 def search_tool(query: str) -> str:
     """Util para buscar información en internet sobre noticias, hechos y eventos actuales. Requiere un texto de busqueda."""
     tavily_engine = TavilySearchResults(
-        max_results=5,
+        max_results=1, # anteriormente 5, pero para optimizar costos y tiempo de respuesta se reduce a 1
         search_depth="advanced",
         include_raw_content=True
     )
@@ -57,6 +57,7 @@ def execute_crew_research(news_text: str) -> str:
         backstory='Eres un periodista de investigación implacable. Tu objetivo es encontrar evidencias concretas que respalden o desmientan la información.',
         verbose=True,
         allow_delegation=False,
+        max_iter = 3, # comando contra bucles de panico
         llm=gemini_model,
         tools=[search_tool] # Pasamos nuestra nueva herramienta nativa de búsqueda a CrewAI
     )
@@ -82,8 +83,11 @@ def execute_crew_research(news_text: str) -> str:
 
     # definicion de las tareas
     research_task = Task(
-        description=f'Busca evidencia que confirme o refute esta noticia: "{news_text}". Extrae los hechos clave.',
-        expected_output='Un resumen de los hechos verificables encontrados.',
+        description=f'Busca evidencia que confirme o refute esta noticia: "{news_text}". Extrae los hechos clave.'
+        'REGLA CRÍTICA: Debes usar la herramienta de búsqueda un MÁXIMO de 2 veces.'
+        'Si no encuentras información concluyente en esos intentos, detente y reporta exactamente lo que encontraste.',
+        expected_output='Un resumen de los hechos verificables encontrados. REGLA ESTRICTA: Incluye ÚNICAMENTE UNA (1) URL principal en la sección "FUENTES ENCONTRADAS".' \
+        'Incluye una sección "FUENTE ENCONTRADA:" con la URL de la fuente utilizada.',
         agent=researcher
     )
 
@@ -94,12 +98,12 @@ def execute_crew_research(news_text: str) -> str:
     )
 
     consistency_judge_task = Task(
-        description=f'CRÍTICO - CONTEXTO TEMPORAL: Hoy es {fecha_actual}. Al evaluar los hechos , '\
-        'ten en cuenta esta fecha real. Revisa los hechos documentados de la investigación, las URLs proporcionadas por el investigador y el reporte de estilo del analista. ' \
-        'Determina si la noticia es: Verdadera, Falsa, Engañosa o Sátira. CRÍTICO: Evalúa la confiabilidad de las URLs; si la fuente es un sitio de sátira conocido, márcala como Sátira. Si la fuente es dudosa ' \
-        'y contradice los hechos reales, márcala como Falsa. Justifica tu respuesta mencionando explícitamente la calidad de las fuentes ' \
+        description=f'CRÍTICO - CONTEXTO TEMPORAL: Hoy es {fecha_actual}. Al evaluar los hechos , '
+        'ten en cuenta esta fecha real. Revisa los hechos documentados de la investigación, la ÚNICA URL proporcionada por el investigador y el reporte de estilo del analista. ' 
+        'Determina si la noticia es: Verdadera, Falsa, Engañosa o Sátira. CRÍTICO: Evalúa la confiabilidad de la URL; si la fuente es un sitio de sátira conocido, márcala como Sátira. Si la fuente es dudosa ' 
+        'y contradice los hechos reales, márcala como Falsa. Justifica tu respuesta mencionando explícitamente la calidad de la fuente ' 
         'e incluye una puntuación de credibilidad del 0 al 100.',
-        expected_output='Un veredicto final justificado (mencionando las URLs), la categoría (Verdadera, Falsa, Engañosa o Sátira) y la puntuación de credibilidad (ej. 85).',
+        expected_output='Un veredicto final estructurado con: 1) RESUMEN: explicación breve del análisis. 2) VEREDICTO: Verdadera, Falsa, Engañosa o Sátira. 3) PUNTUACIÓN: X/100. 4) EVIDENCIA: ÚNICAMENTE UNA (1) URL de respaldo. PROHIBIDO LISTAR MÁS DE UNA.',
         agent=consistency_judge
     )
 

@@ -1,8 +1,9 @@
 import { useParams, useNavigate, useLocation } from 'react-router';
-import { ArrowLeft, Share2, Bookmark, ExternalLink, Calendar, User, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, Share2, Bookmark, ExternalLink, Calendar, User, Sun, Moon, MessageSquare } from 'lucide-react';
 import { useNews } from '../context/NewsContext';
 import { CredibilityBadge } from './CredibilityBadge';
 import { AnalysisBreakdown } from './AnalysisBreakdown';
+// import { ScoreBar } from './ScoreBar';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -12,9 +13,16 @@ export function ArticleDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isDarkMode, articles, toggleBookmark, isBookmarked, toggleTheme } = useNews();
+
+  //const { isDarkMode, articles, toggleBookmark, isBookmarked, toggleTheme } = useNews();
+
+  // Se agrega 'claims' a la importación del contexto
+  const { isDarkMode, articles, claims, toggleBookmark, isBookmarked, toggleTheme } = useNews();
   
-  const article = articles.find(a => a.id === id);
+  //const article = articles.find(a => a.id === id);
+
+  // Se busca en 'articles' y, si no lo encuentra, busca en 'claims'
+  const article = articles.find(a => a.id === id) || claims.find(c => c.id === id);
 
   const backLink = location.state?.from || '/feed';
 
@@ -159,6 +167,31 @@ export function ArticleDetail() {
               className={`prose prose-lg max-w-none ${isDarkMode ? 'prose-invert' : 'prose-gray'}`}
             />
 
+            {/* ---> Tarjeta para la afimracion ingresada por el usuario <--- */}
+            {article.claim && (
+              <div className={`p-6 rounded-2xl border shadow-sm flex gap-4 items-start ${
+                isDarkMode ? 'bg-indigo-950/30 border-indigo-900/50' : 'bg-indigo-50 border-indigo-100'
+              }`}>
+                <div className={`p-3 rounded-full shrink-0 ${
+                  isDarkMode ? 'bg-indigo-900/50 text-indigo-400' : 'bg-indigo-200/50 text-indigo-600'
+                }`}>
+                  <MessageSquare className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className={`text-xs font-bold uppercase tracking-wider mb-2 ${
+                    isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
+                  }`}>
+                    Idea a verificar
+                  </h3>
+                  <p className={`text-xl font-medium leading-relaxed italic ${
+                    isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                  }`}>
+                    "{article.claim}"
+                  </p>
+                </div>
+              </div>
+            )}
+
             <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               {article.description}
             </p>
@@ -183,6 +216,59 @@ export function ArticleDetail() {
                 analysis={article.analysis} 
                 isDarkMode={isDarkMode} 
               />
+              
+              {/* Bloque para el veredicto de desglose de la IA */}
+              <div className="space-y-4 pt-2">
+                
+                {/* Tarjeta Unificada: Veredicto + Motor */}
+                <div className={`p-4 rounded-xl border flex flex-col shadow-sm ${
+                  isDarkMode ? 'bg-gray-900/40 border-gray-800' : 'bg-white border-gray-200'
+                }`}>
+                  {/* Fila superior: Veredicto */}
+                  <div className="flex items-center justify-between">
+                    <span className={`font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Veredicto Final
+                    </span>
+                    <CredibilityBadge classification={article.classification} />
+                  </div>
+
+                  {/* Fila inferior: Etiqueta del Motor Utilizado */}
+                  {article.engine && (
+                    <div className={`mt-4 pt-3 border-t text-right text-xs font-medium ${
+                      isDarkMode ? 'border-gray-800 text-gray-500' : 'border-gray-100 text-gray-400'
+                    }`}>
+                      Analizado por: {
+                        article.engine === 'IA_Agentes' 
+                          ? 'Agentes de IA con CrewAI' 
+                          : 'Modelo Local Predictivo'
+                      }
+                    </div>
+                  )}
+                </div>
+
+                {/* NUEVO: Tarjeta del Reporte de IA (Estilo Consola) */}
+                {article.ai_report && (
+                 <div className={`rounded-xl border shadow-sm overflow-hidden flex flex-col max-h-[500px] ${
+                   isDarkMode ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
+                 }`}>
+                   {/* Cabecera de la terminal */}
+                   <div className={`px-4 py-3 border-b text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${
+                     isDarkMode ? 'border-gray-800 text-gray-400 bg-gray-900/80' : 'border-gray-200 text-gray-500 bg-gray-100'
+                   }`}>
+                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                     Terminal del Investigador
+                   </div>
+                   
+                  {/* Cuerpo del texto */}
+                  <div className={`p-4 overflow-y-auto text-sm font-mono whitespace-pre-wrap leading-relaxed ${
+                    isDarkMode ? 'text-green-400' : 'text-gray-800'
+                  }`}>
+                    {article.ai_report}
+                  </div>
+                </div>
+                )}
+
+              </div>
             </div>
           </div>
         </div>

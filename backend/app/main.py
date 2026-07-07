@@ -124,6 +124,7 @@ def serialize_news(news):
         "classification": news.get("classification", "none"),
         "credibilityScore": news.get("credibilityScore", 0),
         "summary": news.get("summary", ""),
+        "ai_report": news.get("ai_report", "")
     }
 
 async def fetch_and_save_top_news():
@@ -284,12 +285,12 @@ async def classify_unclassified_news():
         
         try:
             # uso de IA para clasificación, con respaldo de modelo local en caso de error (ej: límite de tokens)
-            # 1. El portero verifica los tokens de internet primero
+            # El portero verifica los tokens de internet primero
             has_credits = await verify_tavily_credits()
             if not has_credits:
                 raise Exception("Tavily API sin créditos. Abortando IA para evitar alucinaciones.")
 
-            # 2. uso de IA para clasificación...
+            # uso de IA para clasificación...
             print(f"[{index + 1}/{total_news}] Intentando IA para: {news.get('_id')}")
             ai_result = await execute_analysis(text_to_analyze)
             classification = ai_result["verdict"].lower()
@@ -329,15 +330,18 @@ async def classify_unclassified_news():
             
             final_score = round(float(true_prob) * 100)
             classification = "falsa" if false_prob >= 0.5 else "verdadera"
+            # contenido de respaldo ante el veredicto por probabilidad
+            ai_report = "Análisis de emergencia mediante modelo predictivo matemático local. El reporte detallado de texto solo se genera mediante los agentes de IA."
 
-        # 3. Preparamos la orden de actualización
+        # Preparamos la orden de actualización
         operations.append(
             UpdateOne(
                 {"_id": news["_id"]},
                 {"$set": {
                     "classification": classification,
                     "credibilityScore": final_score,
-                    "engine": used_engine
+                    "engine": used_engine,
+                    "ai_report": ai_report # nueva linea en la DB
                 }}
             )
         )
@@ -365,6 +369,16 @@ async def get_news():
     cursor = db.top_news.find({})
     items = await cursor.to_list(None)
     
+    return [serialize_news(item) for item in items]
+
+@app.get("/api/claims")
+async def get_claims():
+    # Buscamos en la nueva colección
+    cursor = db.claims.find({}).sort("date", -1) # Ordenamos por fecha, más recientes primero
+    items = await cursor.to_list(None)
+    
+    # Podemos reusar serialize_news si los campos son compatibles, 
+    # o crear una función pequeña serialize_claim si difieren mucho.
     return [serialize_news(item) for item in items]
 
 @app.post("/api/news/{news_id}/analyze")
@@ -472,6 +486,9 @@ async def analyze_news_endpoint(news_id: str):
 class URLRequest(BaseModel):
     url: str # se define el esquema de entrada para recibir una URL a analizar
 
+class ClaimRequest(BaseModel):
+    claim: str
+
 # endpoint de análisis de URL externas
 @app.post("/api/analyze-external")
 async def analyze_external_url(request: URLRequest):
@@ -559,6 +576,8 @@ async def analyze_external_url(request: URLRequest):
         classification = ai_result["verdict"].lower()
         final_score = ai_result["score"]
         used_engine = "IA_Agentes"
+        # linea de respaldo ante el veredicto por probabilidad
+        ai_report = ai_result.get("report", "Reporte detallado no disponible.")
 
     except Exception as e:
         print(f"Cambio de motor detectado: {str(e)}")
@@ -584,8 +603,10 @@ async def analyze_external_url(request: URLRequest):
         
         final_score = round(float(true_prob) * 100)
         classification = "falsa" if false_prob >= 0.5 else "verdadera"
+        # linea de respaldo ante el veredicto por probabilidad
+        ai_report = "Análisis de emergencia mediante modelo predictivo matemático local. El reporte detallado de texto solo se genera mediante los agentes de IA."
 
-        fecha_analisis_exacta = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    fecha_analisis_exacta = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Se devuelve la respuesta con las claves exactas que espera el frontend
     external_id = f"external-{uuid.uuid4()}"
@@ -604,8 +625,66 @@ async def analyze_external_url(request: URLRequest):
         "source": source_name,    # Agregado para el Badge
         "date": fecha_analisis_exacta,          # Agregado para el subtítulo
         "publish_date": article_date,  # Por compatibilidad con el frontend que espera publish_date
-        "category": "general" # critico para los filtros del frontend
+        "category": "general", # critico para los filtros del frontend
+        "ai_report": ai_report # nueva linea en la DB
     }
+
+# endpoint para analisis de afirmaciones (ideas/claims)
+@app.post("/api/analyze-claim")
+async def analyze_claim(request: ClaimRequest):
+    print(f"Analizando afirmación: {request.claim}")
+    
+    claim = request.claim.strip()
+    if not claim:
+        raise HTTPException(status_code=400, detail="La afirmación no puede estar vacía.")
+    
+    try:
+        has_credits = await verify_tavily_credits()
+        if not has_credits:
+            raise Exception("Tavily API sin créditos. Abortando IA para evitar alucinaciones.")
+        
+        print("Enviando afirmación a los agentes de IA...")
+        ai_result = await execute_analysis(claim)
+        verdict = ai_result["verdict"].lower()
+        score = ai_result["score"]
+        summary = ai_result.get("summary", "")
+        evidence = ai_result.get("evidence", [])
+        used_engine = "IA_Agentes"
+
+        #captura del reporte
+        ai_report = ai_result.get("report", "Reporte detallado no disponible.")
+        
+    except Exception as e:
+        print(f"Error en análisis con agentes: {str(e)}")
+        raise HTTPException(status_code=503, detail=f"No se pudo completar el análisis: {str(e)}")
+    
+    fecha_analisis = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # armado del diccionario de resultados
+    claim_data =  {
+        "id": f"claim-{uuid.uuid4()}",
+        "claim": claim,
+        "title": f"Análisis: ¿{claim[:80]}?" if len(claim) > 80 else f"Análisis: ¿{claim}?",
+        "description": summary[:200] if summary else "Análisis completado por agentes de IA.",
+        "classification": verdict if verdict != "none" else "none",
+        "credibilityScore": score,
+        "summary": summary,
+        "evidence_urls": evidence,
+        "source": "VeritasCop IA",
+        "date": fecha_analisis,
+        "engine": used_engine,
+        "image": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800",
+        "url": "",
+        "category": "general",
+        "ai_report": ai_report
+    }
+
+    # se procede a guardar en MongoDB a traves de una nueva seccion exclusiva para afirmaciones
+    # se crea una copia para inyectarle el _id propio de Mongo
+    db_document = claim_data.copy()
+    await db.claims.insert_one(db_document)
+
+    return claim_data
 
 @app.post("/api/test-fetch")
 async def test_fetch_news():
