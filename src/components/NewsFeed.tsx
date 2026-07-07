@@ -19,8 +19,10 @@ export function NewsFeed() {
     refreshClaims // se extrae la funcion para actualizar la db local
   } = useNews();
 
-  // Simplificamos los estados, ya que el Loader y la nueva vista hacen el trabajo pesado
+  // Estados completos para la nueva barra de progreso
   const [claimLoading, setClaimLoading] = useState(false);
+  const [claimSuccess, setClaimSuccess] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
   /*
   const [modalOpen, setModalOpen] = useState(false);
   const [currentClaim, setCurrentClaim] = useState('');
@@ -51,22 +53,38 @@ export function NewsFeed() {
     try {
       // Se enciende el VerificationLoader
       setClaimLoading(true);
+      //se reinician los estados al hacer una nueva verificación
+      setClaimSuccess(false);
+      setClaimError(null);
 
       // El sistema espera a los agentes de IA (CrewAI)
       await ApiHandler.analyzeClaim(claim);
+
+      // El 'await' obliga a React a pausar el código hasta que 
+      // la base de datos descargue la nueva lista con la afirmación recién evaluada.
+      await refreshClaims();
       
-      // Una vez terminado el análisis, se refresca el contexto para que detecte el nuevo documento de MongoDB
-      refreshClaims();
-      
-      // Mandamos al usuario a la nueva sección
-      navigate('/afirmaciones');
+      // Apagamos 'cargando' y encendemos 'éxito' para que la UI muestre el 100% verde
+      setClaimLoading(false);
+      setClaimSuccess(true);
+
+      // Esperamos 2.5 segundos exactos antes de cambiar de pantalla
+      setTimeout(() => {
+        setClaimSuccess(false); // Apagamos el modal
+        navigate('/afirmaciones');
+      }, 2500);
 
     } catch (error: any) {
-      console.error("Error en la evaluación de la IA:", error);
-      // posible alerta (como el toast de Sonner) para avisar del error
-    } finally {
-      // Se apaga el loader en caso de error (si hay éxito, el navigate cambia de pantalla)
+      // Manejo del error (usualmente 503 de Google) y lo mandamos al Loader
+      const errorMessage = error?.response?.data?.detail || "Los servidores experimentan alta demanda temporal. Por favor, intenta de nuevo.";
+      
       setClaimLoading(false);
+      setClaimError(errorMessage);
+
+      // Desaparecemos el mensaje de error automáticamente después de 6 segundos
+      setTimeout(() => {
+        setClaimError(null);
+      }, 6000);
     }
   };
 
@@ -91,8 +109,12 @@ export function NewsFeed() {
         />
       </main>
 
-      {/* El componente de carga asintótica que construimos */}
-      <VerificationLoader isAnalyzing={claimLoading} />
+      {/* Le pasamos los 3 estados al nuevo Loader */}
+      <VerificationLoader 
+        isAnalyzing={claimLoading} 
+        isSuccess={claimSuccess} 
+        error={claimError} 
+      />
     </>
   );
 }

@@ -1,23 +1,31 @@
 import { useState, useEffect } from 'react';
-import { Bot, Search, BrainCircuit, Gavel, CheckCircle2 } from 'lucide-react';
+import { Bot, Search, BrainCircuit, Gavel, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useNews } from '../context/NewsContext';
+
+//propiedades de exito y error
+interface VerificationLoaderProps {
+  isAnalyzing: boolean;
+  isSuccess: boolean;
+  error: string | null;
+}
 
 interface VerificationLoaderProps {
   isAnalyzing: boolean;
 }
 
-export function VerificationLoader({ isAnalyzing }: VerificationLoaderProps) {
+export function VerificationLoader({ isAnalyzing, isSuccess, error }: VerificationLoaderProps) {
   const { isDarkMode } = useNews();
   const [progress, setProgress] = useState(0);
   const [step, setStep] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
+  //el modal es visible si está analizando, si hubo exito o si hay error
+  const isVisible = isAnalyzing || isSuccess || error !== null;
 
   const phases = [
     { threshold: 15, text: 'Despertando agentes de IA...', icon: Bot },
     { threshold: 45, text: 'Investigador buscando evidencia...', icon: Search },
     { threshold: 75, text: 'Analista evaluando sesgos...', icon: BrainCircuit },
     { threshold: 95, text: 'Juez de consistencia deliberando...', icon: Gavel },
-    { threshold: 100, text: '¡Veredicto emitido!', icon: CheckCircle2 },
+    { threshold: 100, text: '¡Veredicto emitido con éxito!', icon: CheckCircle2 },
   ];
 
   useEffect(() => {
@@ -25,7 +33,6 @@ export function VerificationLoader({ isAnalyzing }: VerificationLoaderProps) {
     let interval: ReturnType<typeof setInterval>;
 
     if (isAnalyzing) {
-      setIsVisible(true);
       setProgress(0);
       setStep(0);
       
@@ -43,25 +50,19 @@ export function VerificationLoader({ isAnalyzing }: VerificationLoaderProps) {
         });
       }, 500);
       
-    } else if (isVisible) {
-      // Cuando el backend responde, isAnalyzing se vuelve false.
-      // Forzamos el 100% y el último mensaje de éxito.
+    } else if (isSuccess) {
       setProgress(100);
       setStep(phases.length - 1);
-      
-      // Ocultamos el modal después de 1 segundo de mostrar el éxito
-      const timeout = setTimeout(() => {
-        setIsVisible(false);
-      }, 1000);
-      return () => clearTimeout(timeout);
     }
 
     return () => clearInterval(interval);
-  }, [isAnalyzing, isVisible]);
+  }, [isAnalyzing, isSuccess]);
+
 
   if (!isVisible) return null;
 
-  const CurrentIcon = phases[step].icon;
+  //si hay error se muestra el triangulo, caso contrario, el icono de la fase actual
+  const CurrentIcon = error ? AlertTriangle : phases[step].icon;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
@@ -72,43 +73,73 @@ export function VerificationLoader({ isAnalyzing }: VerificationLoaderProps) {
           
           {/* Animación del Ícono */}
           <div className="relative">
-            <div className="absolute inset-0 bg-indigo-500 rounded-full blur-md animate-pulse opacity-40"></div>
-            <div className={`relative p-5 rounded-full ${isDarkMode ? 'bg-gray-800' : 'bg-indigo-50'}`}>
-              <CurrentIcon className={`w-10 h-10 ${progress === 100 ? 'text-green-500' : 'text-indigo-500 animate-bounce'}`} />
+            {!error && (
+              <div className={`absolute inset-0 rounded-full blur-md animate-pulse opacity-40 ${
+                isSuccess ? 'bg-green-500' : 'bg-indigo-500'
+              }`}></div>
+            )}
+            {error && (
+              <div className="absolute inset-0 bg-red-500 rounded-full blur-md animate-pulse opacity-40"></div>
+            )}
+            <div className={`relative p-5 rounded-full ${
+              error ? (isDarkMode ? 'bg-red-900/30' : 'bg-red-50') :
+              isDarkMode ? 'bg-gray-800' : 'bg-indigo-50'
+            }`}>
+              <CurrentIcon className={`w-12 h-12 ${
+                error ? 'text-red-500' : 
+                isSuccess ? 'text-green-500' : 'text-indigo-500 animate-bounce'
+              }`} />
             </div>
           </div>
 
-          {/* Textos del proceso */}
+          {/* Textos del proceso o del Error */}
           <div>
-            <h3 className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Auditando Afirmación
-            </h3>
-            <p className={`text-sm font-medium transition-colors duration-300 ${
-              progress === 100 ? 'text-green-500' : isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
+            <h3 className={`text-xl font-bold mb-2 ${
+              error ? 'text-red-500' : isDarkMode ? 'text-white' : 'text-gray-900'
             }`}>
-              {phases[step].text}
+              {error ? 'Error en el Análisis' : isSuccess ? '¡Análisis Completado!' : 'Auditando Afirmación'}
+            </h3>
+            <p className={`text-sm font-medium transition-colors duration-300 px-4 ${
+              error ? (isDarkMode ? 'text-red-400' : 'text-red-600') :
+              isSuccess ? 'text-green-500' :
+              isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
+            }`}>
+              {error ? error : phases[step].text}
             </p>
           </div>
 
-          {/* Barra de Progreso */}
-          <div className="w-full">
-            <div className={`h-3 w-full rounded-full overflow-hidden ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-              <div 
-                className={`h-full transition-all duration-500 ease-out relative ${
-                  progress === 100 ? 'bg-green-500' : 'bg-indigo-500'
-                }`}
-                style={{ width: `${progress}%` }}
-              >
-                {progress < 100 && (
-                  <div className="absolute inset-0 bg-white/20 animate-[shimmer_1s_infinite] w-full"></div>
-                )}
+          {/* Porcentaje Centrado y Gigante (debajo del texto) */}
+          {!error && (
+            <div className={`text-5xl font-black tracking-tighter ${
+              isSuccess ? 'text-green-500' : isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}>
+              {Math.round(progress)}%
+            </div>
+          )}
+
+          {/* 4. Barra de Progreso */}
+          {!error && (
+            <div className="w-full mt-4">
+              <div className={`h-3 w-full rounded-full overflow-hidden ${
+                isDarkMode ? 'bg-gray-800' : 'bg-gray-200'
+              }`}>
+                {/* Barra de color termal dinámico */}
+                <div 
+                  className={`h-full ${
+                    progress === 100 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 
+                    progress > 75 ? 'bg-lime-500' : 
+                    progress > 40 ? 'bg-yellow-500' : 
+                    'bg-red-500'
+                  }`}
+                  style={{ 
+                    width: `${progress}%`,
+                    /* Le decimos al navegador que anime tanto el crecimiento como el cambio de color */
+                    transition: 'width 0.5s ease-out, background-color 0.5s ease-out' 
+                  }}
+                ></div>
               </div>
             </div>
-            <div className="flex justify-between mt-2 text-xs font-bold text-gray-500">
-              <span>Progreso de IA</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-          </div>
+          )}
           
         </div>
       </div>
