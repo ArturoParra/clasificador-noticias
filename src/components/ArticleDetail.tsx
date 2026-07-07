@@ -13,9 +13,16 @@ export function ArticleDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isDarkMode, articles, toggleBookmark, isBookmarked, toggleTheme } = useNews();
+
+  //const { isDarkMode, articles, toggleBookmark, isBookmarked, toggleTheme } = useNews();
+
+  // Se agrega 'claims' a la importación del contexto
+  const { isDarkMode, articles, claims, toggleBookmark, isBookmarked, toggleTheme } = useNews();
   
-  const article = articles.find(a => a.id === id);
+  //const article = articles.find(a => a.id === id);
+
+  // Se busca en 'articles' y, si no lo encuentra, busca en 'claims'
+  const article = articles.find(a => a.id === id) || claims.find(c => c.id === id);
 
   const backLink = location.state?.from || '/feed';
 

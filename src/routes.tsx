@@ -15,7 +15,7 @@ export const router = createBrowserRouter([
       { path: "feed", Component: NewsFeed },
       { path: "saved", Component: SavedArticles },
       { path: "article/:id", Component: ArticleDetail },
-      { path: "/afirmaciones", element: <ClaimsFeed /> },
+      { path: "afirmaciones", Component: ClaimsFeed },
     ],
   },
 ]);

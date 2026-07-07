@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router'; //para la redireccion
 import { useNews } from '../context/NewsContext';
 import { Header } from './Header';
 import { NewsGrid } from './NewsGrid';
 import { ClaimResultModal } from './ClaimResultModal';
 import { ApiHandler } from '../services/ApiHandler';
+import { VerificationLoader } from './VerificationLoader';
 
 export function NewsFeed() {
+  const navigate = useNavigate(); //hook de navegacion
   const {
     isDarkMode,
     toggleTheme,
@@ -13,9 +16,13 @@ export function NewsFeed() {
     setSelectedCategory,
     searchFilters,
     setSearchFilters,
-    setArticles
+    setArticles,
+    refreshClaims // se extrae la funcion para actualizar la db local
   } = useNews();
 
+  // Simplificamos los estados, ya que el Loader y la nueva vista hacen el trabajo pesado
+  const [claimLoading, setClaimLoading] = useState(false);
+  /*
   const [modalOpen, setModalOpen] = useState(false);
   const [currentClaim, setCurrentClaim] = useState('');
   const [claimResult, setClaimResult] = useState(null);
@@ -36,6 +43,30 @@ export function NewsFeed() {
       const message = error?.response?.data?.detail || 'Error de conexión con el servidor de análisis.';
       setClaimError(message);
     } finally {
+      setClaimLoading(false);
+    }
+  };
+  */
+
+  const handleVerifyClaim = async (claim: string) => {
+    try {
+      // Se enciende el VerificationLoader
+      setClaimLoading(true);
+
+      // El sistema espera a los agentes de IA (CrewAI)
+      await ApiHandler.analyzeClaim(claim);
+      
+      // Una vez terminado el análisis, se refresca el contexto para que detecte el nuevo documento de MongoDB
+      refreshClaims();
+      
+      // Mandamos al usuario a la nueva sección
+      navigate('/afirmaciones');
+
+    } catch (error: any) {
+      console.error("Error en la evaluación de la IA:", error);
+      // posible alerta (como el toast de Sonner) para avisar del error
+    } finally {
+      // Se apaga el loader en caso de error (si hay éxito, el navigate cambia de pantalla)
       setClaimLoading(false);
     }
   };
@@ -61,15 +92,8 @@ export function NewsFeed() {
         />
       </main>
 
-      <ClaimResultModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        isDarkMode={isDarkMode}
-        claim={currentClaim}
-        result={claimResult}
-        isLoading={claimLoading}
-        error={claimError}
-      />
+      {/* El componente de carga asintótica que construimos */}
+      <VerificationLoader isAnalyzing={claimLoading} />
     </>
   );
 }

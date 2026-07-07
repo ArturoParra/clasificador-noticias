@@ -60,12 +60,13 @@ export function ClaimsFeed() {
                     Idea Auditada
                   </div>
                   
+                  {/* Fallback inteligente para el título/afirmación */}
                   <h2 className={`text-2xl font-bold italic leading-tight ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
-                    "{claim.claim}"
+                    "{claim.claim || claim.title?.replace('Análisis: ¿', '').replace('?', '')}"
                   </h2>
                   
                   <p className={`text-sm line-clamp-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {claim.description}
+                    {claim.description || claim.summary}
                   </p>
 
                   <div className={`flex items-center gap-4 text-xs font-medium ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
@@ -74,7 +75,10 @@ export function ClaimsFeed() {
                       {claim.date}
                     </span>
                     <span>•</span>
-                    <span>Motor: {claim.engine === 'IA_Agentes' ? 'CrewAI' : 'Modelo Local'}</span>
+                    {/* Validación doble para el motor */}
+                    <span>
+                      Motor: {(claim.engine === 'IA_Agentes' || claim.source === 'VeritasCop IA') ? 'CrewAI' : 'Modelo Local'}
+                    </span>
                   </div>
                 </div>
 
