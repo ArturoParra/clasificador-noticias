@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router';
 import { MessageSquare, Calendar, ShieldCheck } from 'lucide-react';
 import { useNews } from '../context/NewsContext';

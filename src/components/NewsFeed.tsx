@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router'; //para la redireccion
 import { useNews } from '../context/NewsContext';
 import { Header } from './Header';
 import { NewsGrid } from './NewsGrid';
-import { ClaimResultModal } from './ClaimResultModal';
 import { ApiHandler } from '../services/ApiHandler';
 import { VerificationLoader } from './VerificationLoader';
 
