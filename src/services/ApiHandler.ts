@@ -51,6 +51,11 @@ export const ApiHandler = {
         return response.data;
     },
 
+    analyzeExternalUrl: async (url: string) => {
+        const response = await apiClient.post('/api/analyze-external', { url });
+        return response.data;
+    },
+
    getClaims: async () => {
         const response = await apiClient.get('/api/claims');
         // Mapeamos los datos igual que las noticias para evitar errores en la interfaz
