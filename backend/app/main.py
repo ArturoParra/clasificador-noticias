@@ -252,7 +252,7 @@ async def classify_unclassified_news():
 """
 
 async def classify_unclassified_news():
-    print("Iniciando clasificación masiva (Arquitectura Híbrida)...")
+    print("Iniciando clasificación masiva (Modelo Local)...")
     
     # Traemos todas las noticias pendientes
     cursor = db.top_news.find({"classification": "none"})
@@ -267,9 +267,14 @@ async def classify_unclassified_news():
     BATCH_SIZE = 50
     total_news = len(unclassified_news)
     saved_news_count = 0
-    print(f"Se evaluarán {total_news} noticias.")
+    print(f"Se evaluarán {total_news} noticias con el .pkl.")
+
+    # preparacion del modelo local antes de iterar
+    if modelo is None:
+        print("Error: El modelo local no está cargado en memoria.")
+        return
     
-    # Preparamos el modelo local por si la IA se queda sin tokens
+    # extraccion del modelo y vectorizador si es un diccionario
     real_model = modelo
     vectorizer = None
     if isinstance(modelo, dict):
@@ -279,79 +284,59 @@ async def classify_unclassified_news():
             elif hasattr(val, "transform") and not hasattr(val, "predict"):
                 vectorizer = val
 
-    # Procesamiento de las noticias
+    # Identificación de clases fuera del bucle para optimizar rendimiento
+    if hasattr(real_model, "classes_"):
+        clases = list(real_model.classes_)
+        indice_clase_falsa = clases.index(1) if 1 in clases else 1
+        indice_clase_verdadera = clases.index(0) if 0 in clases else 0
+    else:
+        indice_clase_falsa, indice_clase_verdadera = 1, 0
+
+    # Procesamiento masivo de las noticias
     for index, news in enumerate(unclassified_news):
         text_to_analyze = f"{news.get('title', '')} {news.get('description', '')}"
         
         try:
-            # uso de IA para clasificación, con respaldo de modelo local en caso de error (ej: límite de tokens)
-            # El portero verifica los tokens de internet primero
-            has_credits = await verify_tavily_credits()
-            if not has_credits:
-                raise Exception("Tavily API sin créditos. Abortando IA para evitar alucinaciones.")
-
-            # uso de IA para clasificación...
-            print(f"[{index + 1}/{total_news}] Intentando IA para: {news.get('_id')}")
-            ai_result = await execute_analysis(text_to_analyze)
-            classification = ai_result["verdict"].lower()
-            final_score = ai_result["score"]
-            used_engine = "IA_Agentes"
-
-            # Pequeña pausa para no saturar el RPM de Google
-            await asyncio.sleep(2)
-
-        except Exception as e:
-            # intento con modelo local si la IA falla (ej: límite de tokens)
-            print(f"Límite de IA alcanzado. Usando modelo local rápido para {news.get('_id')}...")
-            used_engine = "Modelo_Local_Respaldo"
-            
             input_data = [text_to_analyze]
             if vectorizer:
                 input_data = vectorizer.transform(input_data)
                 
             # se usa predict_proba en lugar de predict para obtener la confianza de la predicción
             proba = real_model.predict_proba(input_data)[0]
-            
-            # Identificación de clases para asegurar que tomamos la probabilidad correcta
-            if hasattr(real_model, "classes_"):
-                clases = list(real_model.classes_)
-                try:
-                    indice_clase_falsa = clases.index(1)
-                    indice_clase_verdadera = clases.index(0)
-                except ValueError:
-                    indice_clase_falsa = 1 if len(clases) > 1 else 0
-                    indice_clase_verdadera = 0
-            else:
-                indice_clase_falsa = 1
-                indice_clase_verdadera = 0
-                
+
             false_prob = proba[indice_clase_falsa] if len(proba) > indice_clase_falsa else max(proba)
             true_prob = proba[indice_clase_verdadera] if len(proba) > indice_clase_verdadera else 1 - false_prob
             
             final_score = round(float(true_prob) * 100)
-            classification = "falsa" if false_prob >= 0.5 else "verdadera"
-            # contenido de respaldo ante el veredicto por probabilidad
-            ai_report = "Análisis de emergencia mediante modelo predictivo matemático local. El reporte detallado de texto solo se genera mediante los agentes de IA."
+            # Se usa el umbral dinámico definido al inicio
+            if MODO_PREDICCION == "alta_precision":
+                classification = "falsa" if false_prob >= umbral_precision_alta else "verdadera"
+            else:
+                classification = "falsa" if false_prob >= 0.5 else "verdadera"
 
-        # Preparamos la orden de actualización
-        operations.append(
-            UpdateOne(
-                {"_id": news["_id"]},
-                {"$set": {
-                    "classification": classification,
-                    "credibilityScore": final_score,
-                    "engine": used_engine,
-                    "ai_report": ai_report # nueva linea en la DB
-                }}
+            # Preparacion de la orden de actualización para MongoDB
+            operations.append(
+                UpdateOne(
+                    {"_id": news["_id"]},
+                    {"$set": {
+                        "classification": classification,
+                        "credibilityScore": final_score,
+                        "engine": "Modelo_Local_PKL",
+                        "ai_report": "Clasificación masiva automática mediante modelo predictivo matemático local (Rápido y sin costo)."
+                    }}
+                )
             )
-        )
 
-        # checkpoint de guardado cada cierto número de noticias
-        if len(operations) >= BATCH_SIZE:
-            await db.top_news.bulk_write(operations)
-            saved_news_count += len(operations)
-            print(f"¡Punto de control! {saved_news_count}/{total_news} noticias aseguradas en MongoDB.")
-            operations = [] # Limpieza de la memoria para el siguiente lote
+            # Checkpoint de guardado para evitar saturar la memoria RAM
+            if len(operations) >= BATCH_SIZE:
+                await db.top_news.bulk_write(operations)
+                saved_news_count += len(operations)
+                print(f"¡Punto de control! {saved_news_count}/{total_news} noticias aseguradas en MongoDB.")
+                operations = []
+            
+
+        except Exception as e:
+            print(f"Error clasificando localmente la noticia {news.get('_id')}: {str(e)}")
             
     # Guardado masivo en la DB
     if operations:
