@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, X, ShieldCheck } from 'lucide-react';
 import type { NewsCategory, SearchFilters } from '../types/types';
+import { ApiHandler } from '../services/ApiHandler';
 
 interface AdvancedSearchProps {
   onSearch: (filters: SearchFilters) => void;
@@ -73,30 +74,34 @@ export function AdvancedSearch({ onSearch, isDarkMode, selectedCategory, onCateg
       if (onVerifyClaim) {
         onVerifyClaim(searchText);
       }
+      // Limpiamos también el componente padre
       setFilters({ text: '' });
+      onSearch({ text: '' });
       return;
     }
 
-    const isUrl = searchText.startsWith('http://') || searchText.startsWith('https://');
+    // Mejoramos la validación para aceptar URLs con www.
+    const isUrl = searchText.startsWith('http://') || searchText.startsWith('https://') || searchText.startsWith('www.');
 
     if (isUrl) {
+      // Inyectamos el protocolo si el usuario solo puso "www"
+      const urlToSend = searchText.startsWith('www.') ? `https://${searchText}` : searchText;
+
       setIsAnalyzing(true);
       try {
-        const response = await fetch('http://localhost:8000/api/analyze-external', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: searchText }),
-        });
+        // Usamos tu ApiHandler para que respete el entorno (Local o Render)
+        const externalArticle = await ApiHandler.analyzeExternalUrl(urlToSend);
 
-        if (response.ok) {
-          const externalArticle = await response.json();
-          setFilters({ text: '' });
-          if (onExternalArticleAnalyzed) {
-            onExternalArticleAnalyzed(externalArticle);
-          }
-        } else {
-          alert("Error al analizar la URL. Verifique la validez del enlace.");
+        // Limpiamos el texto visual de la barra
+        setFilters({ text: '' });
+        // Le avisamos a NewsGrid que deje de filtrar para que la tarjeta se vea
+        onSearch({ text: '' }); 
+
+        // Empujamos la tarjeta al inicio del feed
+        if (onExternalArticleAnalyzed) {
+          onExternalArticleAnalyzed(externalArticle);
         }
+        
       } catch (error) {
         console.error('Error analizando la URL externa:', error);
         alert("Falla de conexión con el servidor de análisis.");
