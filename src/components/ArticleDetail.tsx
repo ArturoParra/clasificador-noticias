@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useLocation } from 'react-router';
-import { ArrowLeft, Share2, Bookmark, ExternalLink, Calendar, User, Sun, Moon, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Share2, Bookmark, ExternalLink, Calendar, User, Sun, Moon, MessageSquare, ShieldCheck } from 'lucide-react';
 import { useNews } from '../context/NewsContext';
 import { CredibilityBadge } from './CredibilityBadge';
 import { AnalysisBreakdown } from './AnalysisBreakdown';
@@ -196,17 +196,36 @@ export function ArticleDetail() {
               {article.description}
             </p>
             
-            <div className={`mt-12 p-6 rounded-xl border ${
-              isDarkMode ? 'bg-gray-900/50 border-gray-800' : 'bg-white border-gray-200'
-            }`}>
-              <h3 className={`font-semibold mb-2 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                <ExternalLink className="w-4 h-4" />
-                Fuente Original
-              </h3>
-              <Button variant="outline" className={`w-full sm:w-auto ${isDarkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : ''}`}>
-                <a href={article.url} target="_blank" rel="noopener noreferrer" className="sr-only">Visitar fuente original</a>
-              </Button>
-            </div>
+            {article.claim ? (
+              /* BLOQUE PARA AFIRMACIONES: Veredicto del Juez */
+              <div className={`mt-12 p-6 rounded-xl border shadow-sm ${
+                isDarkMode ? 'bg-indigo-950/20 border-indigo-900/50' : 'bg-indigo-50 border-indigo-100'
+              }`}>
+                <h3 className={`font-semibold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                  <ShieldCheck className="w-5 h-5" />
+                  Veredicto del Juez de Consistencia
+                </h3>
+                <div className={`text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  {article.ai_report ? article.ai_report : "El reporte detallado no está disponible para esta afirmación."}
+                </div>
+              </div>
+            ) : (
+              /* BLOQUE PARA NOTICIAS: Fuente Original con diseño original */
+              <div className={`mt-12 p-6 rounded-xl border ${
+                isDarkMode ? 'bg-gray-900/50 border-gray-800' : 'bg-white border-gray-200'
+              }`}>
+                <h3 className={`font-semibold mb-2 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <ExternalLink className="w-4 h-4" />
+                  Fuente Original
+                </h3>
+                <Button variant="outline" className={`w-full sm:w-auto ${isDarkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : ''}`}>
+                  {/* Se quitó la clase 'sr-only' de la etiqueta <a> para que el botón sí muestre el texto en pantalla */}
+                  <a href={article.url} target="_blank" rel="noopener noreferrer" className="px-2">Visitar fuente original</a>
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Sidebar Analysis */}
