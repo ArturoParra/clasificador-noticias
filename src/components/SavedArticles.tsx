@@ -18,11 +18,8 @@ export function SavedArticles() {
   return (
     <>
       <Header 
-        onSearch={setSearchFilters} 
         isDarkMode={isDarkMode}
         onToggleTheme={toggleTheme}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
       />
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
@@ -52,6 +49,8 @@ export function SavedArticles() {
           searchFilters={searchFilters}
           showOnlyFavorites={true}
           showStatistics={false}
+          onSearch={setSearchFilters}
+          onCategoryChange={setSelectedCategory}
         />
       </main>
     </>

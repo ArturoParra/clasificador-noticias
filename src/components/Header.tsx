@@ -1,29 +1,18 @@
 import { ShieldCheck, Sun, Moon, Bookmark, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router';
-import { AdvancedSearch } from './AdvancedSearch';
-import type { SearchFilters, NewsCategory } from '../types/types';
+import { VerifyBar } from './VerifyBar';
 import { useNews } from '../context/NewsContext';
 
 interface HeaderProps {
-  onSearch?: (filters: SearchFilters) => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
-  selectedCategory: NewsCategory;
-  onCategoryChange: (category: NewsCategory) => void;
   onExternalArticleAnalyzed?: (article: any) => void;
   onVerifyClaim?: (claim: string) => void;
 }
 
-export function Header({ onSearch, isDarkMode, onToggleTheme, selectedCategory, onCategoryChange, onExternalArticleAnalyzed, onVerifyClaim }: HeaderProps) {
+export function Header({ isDarkMode, onToggleTheme, onExternalArticleAnalyzed, onVerifyClaim }: HeaderProps) {
   const { bookmarks } = useNews();
   const favoritesCount = bookmarks.length;
-
-  const handleSearch = (filters: SearchFilters) => {
-    if (onSearch) {
-      onSearch(filters);
-    }
-    console.log('Search filters:', filters);
-  };
 
   return (
     <header className={`transition-colors duration-500 border-b ${
@@ -109,11 +98,8 @@ export function Header({ onSearch, isDarkMode, onToggleTheme, selectedCategory, 
       </div>
       
       <div className="max-w-7xl mx-auto px-4 pb-6">
-        <AdvancedSearch 
-          onSearch={handleSearch} 
+        <VerifyBar 
           isDarkMode={isDarkMode}
-          selectedCategory={selectedCategory}
-          onCategoryChange={onCategoryChange}
           onExternalArticleAnalyzed={onExternalArticleAnalyzed}
           onVerifyClaim={onVerifyClaim}
         />

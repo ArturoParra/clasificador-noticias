@@ -8,6 +8,7 @@ import { Statistics } from './Statistics';
 import { Pagination } from './Pagination';
 import type { SearchFilters } from '../types/types';
 import { useNews } from '../context/NewsContext';
+import { FeedSearchBar } from './FeedSearchBar';
 
 interface NewsGridProps {
   selectedCategory: NewsCategory;
@@ -15,9 +16,11 @@ interface NewsGridProps {
   searchFilters: SearchFilters;
   showOnlyFavorites?: boolean;
   showStatistics?: boolean;
+  onSearch?: (filters: SearchFilters) => void;
+  onCategoryChange?: (category: NewsCategory) => void;
 }
 
-export function NewsGrid({ selectedCategory, isDarkMode, searchFilters, showOnlyFavorites = false, showStatistics = true }: NewsGridProps) {
+export function NewsGrid({ selectedCategory, isDarkMode, searchFilters, showOnlyFavorites = false, showStatistics = true, onSearch, onCategoryChange }: NewsGridProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { articles, bookmarks, toggleBookmark } = useNews();
@@ -99,6 +102,15 @@ export function NewsGrid({ selectedCategory, isDarkMode, searchFilters, showOnly
   return (
     <>
       {showStatistics && <Statistics articles={sortedNews} isDarkMode={isDarkMode} />}
+      
+      {showStatistics && onSearch && onCategoryChange && (
+        <FeedSearchBar 
+          onSearch={onSearch}
+          isDarkMode={isDarkMode}
+          selectedCategory={selectedCategory}
+          onCategoryChange={onCategoryChange}
+        />
+      )}
       
       <ViewOptions
         viewMode={viewMode}

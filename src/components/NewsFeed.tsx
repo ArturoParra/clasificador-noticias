@@ -91,11 +91,8 @@ export function NewsFeed() {
   return (
     <>
       <Header
-        onSearch={setSearchFilters}
         isDarkMode={isDarkMode}
         onToggleTheme={toggleTheme}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
         onExternalArticleAnalyzed={newArticle => {
           setArticles(prevArticles => [newArticle, ...prevArticles]);
         }}
@@ -106,6 +103,8 @@ export function NewsFeed() {
           selectedCategory={selectedCategory}
           isDarkMode={isDarkMode}
           searchFilters={searchFilters}
+          onSearch={setSearchFilters}
+          onCategoryChange={setSelectedCategory}
         />
       </main>
 
