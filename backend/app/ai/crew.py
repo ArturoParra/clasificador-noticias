@@ -5,6 +5,7 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from crewai.tools import tool # decorador nativo de CrewAI
 from datetime import datetime # para manejo de fechas en el análisis de noticias
 import os
+import json
 
 # Definimos la herramienta afuera de la función con el decorador de CrewAI
 @tool("Motor de busqueda de internet")
@@ -98,12 +99,19 @@ def execute_crew_research(news_text: str) -> str:
     )
 
     consistency_judge_task = Task(
-        description=f'CRÍTICO - CONTEXTO TEMPORAL: Hoy es {fecha_actual}. Al evaluar los hechos , '
-        'ten en cuenta esta fecha real. Revisa los hechos documentados de la investigación, la ÚNICA URL proporcionada por el investigador y el reporte de estilo del analista. ' 
-        'Determina si la noticia es: Verdadera, Falsa, Engañosa o Sátira. CRÍTICO: Evalúa la confiabilidad de la URL; si la fuente es un sitio de sátira conocido, márcala como Sátira. Si la fuente es dudosa ' 
-        'y contradice los hechos reales, márcala como Falsa. Justifica tu respuesta mencionando explícitamente la calidad de la fuente ' 
-        'e incluye una puntuación de credibilidad del 0 al 100.',
-        expected_output='Un veredicto final estructurado con: 1) RESUMEN: explicación breve del análisis. 2) VEREDICTO: Verdadera, Falsa, Engañosa o Sátira. 3) PUNTUACIÓN: X/100. 4) EVIDENCIA: ÚNICAMENTE UNA (1) URL de respaldo. PROHIBIDO LISTAR MÁS DE UNA.',
+        description=f'CRÍTICO - CONTEXTO TEMPORAL: Hoy es {fecha_actual}. '
+        'Revisa los hechos documentados, la ÚNICA URL proporcionada por el investigador y el reporte de estilo del analista. ' 
+        'Determina si la noticia es: Verdadera, Falsa, Engañosa o Sátira. '
+        'REGLA DE PUNTUACIÓN: La puntuación (0 al 100) evalúa la VERACIDAD de la afirmación, NO la calidad de la fuente que usaste para investigar. Si es Sátira = 0, si es Falsa = 0, Engañosa = 10-50, Verdadera = 80-100. '
+        'REGLA DE FORMATO: Tu respuesta final debe ser ÚNICA y EXCLUSIVAMENTE un objeto JSON válido. Prohibido usar prefijos, saludos o bloques de código Markdown (```json).',
+        expected_output='''Un objeto JSON exacto y parseable con esta estructura estricta:
+        {
+            "verdict": "verdadera" | "falsa" | "engañosa" | "sátira",
+            "score": <número entero>,
+            "summary": "Resumen breve del veredicto.",
+            "evidence": ["url_de_la_fuente_encontrada"],
+            "report": "### 1) Análisis de IA... (aquí va todo tu desglose detallado con Markdown para la terminal)"
+        }''',
         agent=consistency_judge
     )
 
@@ -117,4 +125,24 @@ def execute_crew_research(news_text: str) -> str:
 
     bottom_line = crew.kickoff() # inicio del trabajo
     
-    return str(bottom_line)
+    # PARSEO SEGURO A DICCIONARIO
+    
+    # 1. Convertimos la salida a texto crudo
+    result_str = str(bottom_line)
+    
+    # 2. Limpiamos cualquier bloque Markdown (```json) que Gemini haya colado
+    result_str = result_str.replace("```json", "").replace("```", "").strip()
+    
+    # 3. Convertimos el texto a Diccionario y lo retornamos
+    try:
+        return json.loads(result_str)
+    except json.JSONDecodeError as e:
+        print(f"Error fatal parseando el JSON: {e}")
+        # Paracaídas de emergencia para que el backend nunca colapse
+        return {
+            "verdict": "falsa",
+            "score": 0,
+            "summary": "El análisis finalizó, pero hubo un error de formato en la respuesta de la IA.",
+            "evidence": [],
+            "report": result_str
+        }

@@ -453,9 +453,13 @@ async def analyze_news_endpoint(news_id: str):
         # enrutador condicional
         if puntaje_local <= 60:
             # Puntuación baja: Entra la arquitectura de Agentes LLM
-            ai_result = await execute_analysis(text_to_analyze)
-            veredicto_final = ai_result["verdict"].lower()
-            score_final = ai_result["score"]
+            raw_result = await execute_analysis(text_to_analyze)
+            
+            # Desempaquetador inteligente
+            ai_result = raw_result.get("verdict") if isinstance(raw_result.get("verdict"), dict) else raw_result
+            
+            veredicto_final = str(ai_result.get("verdict", "none")).lower()
+            score_final = ai_result.get("score", 0)
             motor_utilizado = "Agentes_LLM_LangGraph"
         else:
             # Puntuación alta: Confiamos en el modelo local
@@ -573,9 +577,13 @@ async def analyze_external_url(request: URLRequest):
         if not has_credits:
             raise Exception("Tavily API sin créditos. Abortando IA para evitar alucinaciones.")
         print("Enviando URL a los agentes de IA...")
-        ai_result = await execute_analysis(text_to_analyze)
-        classification = ai_result["verdict"].lower()
-        final_score = ai_result["score"]
+        raw_result = await execute_analysis(text_to_analyze)
+        
+        # Desempaquetador inteligente
+        ai_result = raw_result.get("verdict") if isinstance(raw_result.get("verdict"), dict) else raw_result
+
+        classification = str(ai_result.get("verdict", "none")).lower()
+        final_score = ai_result.get("score", 0)
         used_engine = "IA_Agentes"
         # linea de respaldo ante el veredicto por probabilidad
         ai_report = ai_result.get("report", "Reporte detallado no disponible.")
@@ -658,14 +666,17 @@ async def analyze_claim(request: ClaimRequest):
             raise Exception("Tavily API sin créditos. Abortando IA para evitar alucinaciones.")
         
         print("Enviando afirmación a los agentes de IA...")
-        ai_result = await execute_analysis(claim)
-        verdict = ai_result["verdict"].lower()
-        score = ai_result["score"]
+        raw_result = await execute_analysis(claim)  
+        # Desempaquetador inteligente a prueba de errores
+        ai_result = raw_result.get("verdict") if isinstance(raw_result.get("verdict"), dict) else raw_result
+
+        verdict = str(ai_result.get("verdict", "none")).lower()
+        score = ai_result.get("score", 0)
         summary = ai_result.get("summary", "")
         evidence = ai_result.get("evidence", [])
         used_engine = "IA_Agentes"
 
-        #captura del reporte
+        # captura del reporte
         ai_report = ai_result.get("report", "Reporte detallado no disponible.")
         
     except Exception as e:
