@@ -1,19 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Shield, CheckCircle/* , XCircle */, AlertTriangle, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
-import type { NewsArticle } from '../data/mockNews.ts';
-import { useMemo } from 'react';
+// import type { NewsArticle } from '../data/mockNews.ts';
 import { useNews } from '../context/NewsContext.tsx';
 
+// se elimina articles de la interfaz para que sea independiente de las pestañas
 interface StatisticsProps {
-  articles: NewsArticle[];
+  // articles: NewsArticle[];
   isDarkMode: boolean;
 }
 
-export function Statistics({ articles, isDarkMode }: StatisticsProps) {
+export function Statistics({ isDarkMode }: StatisticsProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [animatingIndices, setAnimatingIndices] = useState<Set<number>>(new Set());
   const prevValuesRef = useRef<(string | number)[]>([]);
-  const { claims } = useNews(); //claims del contexto importado
+  // se extraen tanto articles como claims de la db global para unificar los calculos y no depender de la pestaña activa
+  const { articles, claims } = useNews();
 
   // Load collapse state from localStorage
   useEffect(() => {
@@ -35,7 +36,7 @@ export function Statistics({ articles, isDarkMode }: StatisticsProps) {
     totalItems,
     averageCredibility,
     verifiedCount,
-    misleadingCount,
+    falseCount, // misleadingCount
     highCredibility,
     lowCredibility
   } = useMemo(() => {
@@ -50,11 +51,16 @@ export function Statistics({ articles, isDarkMode }: StatisticsProps) {
     // "Verificadas": Exclusivamente las afirmaciones ingresadas por usuarios
     const verified = (claims || []).length;
     
-    // "Engañosas": Filtramos por el campo classification de la DB actual
+    // "Falsas": Filtramos de manera estricta por el campo classification === 'falsa
+    /*
     const misleading = allItems.filter(
       item => item.classification === 'engañosa' || item.classification === 'falsa'
     ).length;
-
+    */
+   const falsas = allItems.filter(
+       item => item.classification === 'falsa'
+       ).length;
+       
     // Alta y Baja Credibilidad
     const highCred = allItems.filter(item => (item.credibilityScore || 0) >= 80).length;
     const lowCred = allItems.filter(item => (item.credibilityScore || 0) < 50).length;
@@ -63,7 +69,7 @@ export function Statistics({ articles, isDarkMode }: StatisticsProps) {
       totalItems: total,
       averageCredibility: average,
       verifiedCount: verified,
-      misleadingCount: misleading,
+      falseCount: falsas,
       highCredibility: highCred,
       lowCredibility: lowCred
     };
@@ -86,9 +92,9 @@ export function Statistics({ articles, isDarkMode }: StatisticsProps) {
     },
     {
       icon: AlertTriangle,
-      label: 'Engañosas',
-      value: misleadingCount,
-      color: isDarkMode ? 'text-gray-500' : 'text-gray-500',
+      label: 'Falsas',
+      value: falseCount,
+      color: isDarkMode ? 'text-gray-400' : 'text-gray-600',
       bgColor: isDarkMode ? 'bg-gray-900' : 'bg-gray-100',
     },
     {
@@ -100,7 +106,7 @@ export function Statistics({ articles, isDarkMode }: StatisticsProps) {
     },
   ];
 
-  // Detect value changes and trigger animation (Se mantiene igual)
+  // Detect value changes and trigger animation
   useEffect(() => {
     const currentValues = stats.map(s => s.value);
     const prevValues = prevValuesRef.current;

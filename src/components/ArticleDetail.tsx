@@ -197,36 +197,62 @@ export function ArticleDetail() {
             </p>
             
             {article.claim ? (
-              /* BLOQUE PARA AFIRMACIONES: Veredicto del Juez */
-              <div className={`mt-12 p-6 rounded-xl border shadow-sm ${
-                isDarkMode ? 'bg-indigo-950/20 border-indigo-900/50' : 'bg-indigo-50 border-indigo-100'
+              /* BLOQUE PARA AFIRMACIONES: Terminal del Investigador Horizontal */
+              <div className={`mt-12 rounded-xl border shadow-sm overflow-hidden flex flex-col ${
+                isDarkMode ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
               }`}>
-                <h3 className={`font-semibold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
-                  <ShieldCheck className="w-5 h-5" />
-                  Veredicto del Juez de Consistencia
-                </h3>
-                <div className={`text-sm md:text-base leading-relaxed whitespace-pre-wrap font-medium ${
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                {/* Cabecera de la terminal */}
+                <div className={`px-4 py-3 border-b text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${
+                  isDarkMode ? 'border-gray-800 text-gray-400 bg-gray-900/80' : 'border-gray-200 text-gray-500 bg-gray-100'
                 }`}>
-                  {article.ai_report ? article.ai_report : "El reporte detallado no está disponible para esta afirmación."}
+                  <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                  Terminal del Investigador
+                </div>
+                
+                {/* Cuerpo del texto (Más amplio y cómodo de leer) */}
+                <div className={`p-6 overflow-y-auto text-base font-mono whitespace-pre-wrap leading-relaxed ${
+                  isDarkMode ? 'text-green-400' : 'text-gray-800'
+                }`}>
+                  {article.ai_report ? article.ai_report : "El reporte detallado no está disponible."}
                 </div>
               </div>
             ) : (
-              /* BLOQUE PARA NOTICIAS: Fuente Original con diseño original */
-              <div className={`mt-12 p-6 rounded-xl border ${
-                isDarkMode ? 'bg-gray-900/50 border-gray-800' : 'bg-white border-gray-200'
-              }`}>
-                <h3 className={`font-semibold mb-2 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  <ExternalLink className="w-4 h-4" />
-                  Fuente Original
-                </h3>
-                <Button variant="outline" className={`w-full sm:w-auto ${isDarkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : ''}`}>
-                  {/* Se quitó la clase 'sr-only' de la etiqueta <a> para que el botón sí muestre el texto en pantalla */}
-                  <a href={article.url} target="_blank" rel="noopener noreferrer" className="px-2">Visitar fuente original</a>
-                </Button>
+              /* BLOQUE PARA NOTICIAS: Fuente Original y Terminal (si existe) */
+              <div className="mt-12 space-y-8">
+                {/* 1. Botón de Fuente Original */}
+                <div className={`p-6 rounded-xl border ${
+                  isDarkMode ? 'bg-gray-900/50 border-gray-800' : 'bg-white border-gray-200'
+                }`}>
+                  <h3 className={`font-semibold mb-2 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <ExternalLink className="w-4 h-4" />
+                    Fuente Original
+                  </h3>
+                  <Button variant="outline" className={`w-full sm:w-auto ${isDarkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : ''}`}>
+                    <a href={article.url} target="_blank" rel="noopener noreferrer" className="px-2">Visitar enlace externo</a>
+                  </Button>
+                </div>
+
+                {/* 2. Terminal Horizontal (Para las URLs que pasaron por el modelo local) */}
+                {article.ai_report && (
+                  <div className={`rounded-xl border shadow-sm overflow-hidden flex flex-col ${
+                    isDarkMode ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
+                  }`}>
+                    <div className={`px-4 py-3 border-b text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${
+                      isDarkMode ? 'border-gray-800 text-gray-400 bg-gray-900/80' : 'border-gray-200 text-gray-500 bg-gray-100'
+                    }`}>
+                      <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                      Terminal del Investigador
+                    </div>
+                    <div className={`p-6 overflow-y-auto text-sm font-mono whitespace-pre-wrap leading-relaxed ${
+                      isDarkMode ? 'text-green-400' : 'text-gray-800'
+                    }`}>
+                      {article.ai_report}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </div> {/* <--- Este </div> cierra la columna principal (md:col-span-2) */}
 
           {/* Sidebar Analysis */}
           <div className="md:col-span-1">
@@ -264,28 +290,6 @@ export function ArticleDetail() {
                     </div>
                   )}
                 </div>
-
-                {/* NUEVO: Tarjeta del Reporte de IA (Estilo Consola) */}
-                {article.ai_report && (
-                 <div className={`rounded-xl border shadow-sm overflow-hidden flex flex-col max-h-[500px] ${
-                   isDarkMode ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
-                 }`}>
-                   {/* Cabecera de la terminal */}
-                   <div className={`px-4 py-3 border-b text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${
-                     isDarkMode ? 'border-gray-800 text-gray-400 bg-gray-900/80' : 'border-gray-200 text-gray-500 bg-gray-100'
-                   }`}>
-                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                     Terminal del Investigador
-                   </div>
-                   
-                  {/* Cuerpo del texto */}
-                  <div className={`p-4 overflow-y-auto text-sm font-mono whitespace-pre-wrap leading-relaxed ${
-                    isDarkMode ? 'text-green-400' : 'text-gray-800'
-                  }`}>
-                    {article.ai_report}
-                  </div>
-                </div>
-                )}
 
               </div>
             </div>

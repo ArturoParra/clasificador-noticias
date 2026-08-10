@@ -101,7 +101,7 @@ export function NewsGrid({ selectedCategory, isDarkMode, searchFilters, showOnly
 
   return (
     <>
-      {showStatistics && <Statistics articles={sortedNews} isDarkMode={isDarkMode} />}
+      {showStatistics && <Statistics /*articles={sortedNews}*/ isDarkMode={isDarkMode} />}
       
       {showStatistics && onSearch && onCategoryChange && (
         <FeedSearchBar 
