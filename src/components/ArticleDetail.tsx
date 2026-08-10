@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useLocation } from 'react-router';
-import { ArrowLeft, Share2, Bookmark, ExternalLink, Calendar, User, Sun, Moon, MessageSquare, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Share2, Bookmark, ExternalLink, Calendar, User, Sun, Moon, MessageSquare, /*ShieldCheck*/ } from 'lucide-react';
 import { useNews } from '../context/NewsContext';
 import { CredibilityBadge } from './CredibilityBadge';
 import { AnalysisBreakdown } from './AnalysisBreakdown';
@@ -196,62 +196,49 @@ export function ArticleDetail() {
               {article.description}
             </p>
             
-            {article.claim ? (
-              /* BLOQUE PARA AFIRMACIONES: Terminal del Investigador Horizontal */
-              <div className={`mt-12 rounded-xl border shadow-sm overflow-hidden flex flex-col ${
+            {/* 1. CAJA DINÁMICA DE FUENTES Y EVIDENCIA */}
+            {/* Se muestra si la noticia tiene URL original, o si la afirmación tiene URL de evidencia */}
+            {(article.url || (article.evidence_urls && article.evidence_urls.length > 0)) && (
+              <div className={`mt-12 p-6 rounded-xl border ${
+                isDarkMode ? 'bg-gray-900/50 border-gray-800' : 'bg-white border-gray-200'
+              }`}>
+                <h3 className={`font-semibold mb-2 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <ExternalLink className="w-4 h-4" />
+                  {article.claim ? 'Evidencia del Investigador' : 'Fuente Original'}
+                </h3>
+                <Button variant="outline" className={`w-full sm:w-auto ${isDarkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : ''}`}>
+                  <a 
+                    href={article.claim ? article.evidence_urls?.[0] : article.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="px-2"
+                  >
+                    {article.claim ? 'Visitar fuente de evidencia' : 'Visitar enlace externo'}
+                  </a>
+                </Button>
+              </div>
+            )}
+
+            {/* 2. TERMINAL DEL INVESTIGADOR HORIZONTAL */}
+            {/* Se muestra SOLAMENTE si existe un reporte de IA (ya sea de CrewAI o del Modelo Local) */}
+            {article.ai_report && (
+              <div className={`mt-8 rounded-xl border shadow-sm overflow-hidden flex flex-col ${
                 isDarkMode ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
               }`}>
-                {/* Cabecera de la terminal */}
                 <div className={`px-4 py-3 border-b text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${
                   isDarkMode ? 'border-gray-800 text-gray-400 bg-gray-900/80' : 'border-gray-200 text-gray-500 bg-gray-100'
                 }`}>
                   <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
                   Terminal del Investigador
                 </div>
-                
-                {/* Cuerpo del texto (Más amplio y cómodo de leer) */}
                 <div className={`p-6 overflow-y-auto text-base font-mono whitespace-pre-wrap leading-relaxed ${
                   isDarkMode ? 'text-green-400' : 'text-gray-800'
                 }`}>
-                  {article.ai_report ? article.ai_report : "El reporte detallado no está disponible."}
+                  {article.ai_report}
                 </div>
-              </div>
-            ) : (
-              /* BLOQUE PARA NOTICIAS: Fuente Original y Terminal (si existe) */
-              <div className="mt-12 space-y-8">
-                {/* 1. Botón de Fuente Original */}
-                <div className={`p-6 rounded-xl border ${
-                  isDarkMode ? 'bg-gray-900/50 border-gray-800' : 'bg-white border-gray-200'
-                }`}>
-                  <h3 className={`font-semibold mb-2 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    <ExternalLink className="w-4 h-4" />
-                    Fuente Original
-                  </h3>
-                  <Button variant="outline" className={`w-full sm:w-auto ${isDarkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : ''}`}>
-                    <a href={article.url} target="_blank" rel="noopener noreferrer" className="px-2">Visitar enlace externo</a>
-                  </Button>
-                </div>
-
-                {/* 2. Terminal Horizontal (Para las URLs que pasaron por el modelo local) */}
-                {article.ai_report && (
-                  <div className={`rounded-xl border shadow-sm overflow-hidden flex flex-col ${
-                    isDarkMode ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
-                  }`}>
-                    <div className={`px-4 py-3 border-b text-sm font-bold uppercase tracking-wider flex items-center gap-2 ${
-                      isDarkMode ? 'border-gray-800 text-gray-400 bg-gray-900/80' : 'border-gray-200 text-gray-500 bg-gray-100'
-                    }`}>
-                      <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-                      Terminal del Investigador
-                    </div>
-                    <div className={`p-6 overflow-y-auto text-sm font-mono whitespace-pre-wrap leading-relaxed ${
-                      isDarkMode ? 'text-green-400' : 'text-gray-800'
-                    }`}>
-                      {article.ai_report}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
+
           </div> {/* <--- Este </div> cierra la columna principal (md:col-span-2) */}
 
           {/* Sidebar Analysis */}
