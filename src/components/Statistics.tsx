@@ -1,16 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Shield, CheckCircle/* , XCircle */, AlertTriangle, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
-import type { NewsArticle } from '../data/mockNews.ts';
+// import type { NewsArticle } from '../data/mockNews.ts';
+import { useNews } from '../context/NewsContext.tsx';
 
+// se elimina articles de la interfaz para que sea independiente de las pestañas
 interface StatisticsProps {
-  articles: NewsArticle[];
+  // articles: NewsArticle[];
   isDarkMode: boolean;
 }
 
-export function Statistics({ articles, isDarkMode }: StatisticsProps) {
+export function Statistics({ isDarkMode }: StatisticsProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [animatingIndices, setAnimatingIndices] = useState<Set<number>>(new Set());
   const prevValuesRef = useRef<(string | number)[]>([]);
+  // se extraen tanto articles como claims de la db global para unificar los calculos y no depender de la pestaña activa
+  const { articles, claims } = useNews();
 
   // Load collapse state from localStorage
   useEffect(() => {
@@ -27,18 +31,49 @@ export function Statistics({ articles, isDarkMode }: StatisticsProps) {
     localStorage.setItem('statistics-collapsed', JSON.stringify(newState));
   };
 
-  const totalArticles = articles.length;
-  
-  const averageCredibility = totalArticles > 0
-    ? Math.round(articles.reduce((sum, article) => sum + article.credibilityScore, 0) / totalArticles)
-    : 0;
+  // centralizacion de los calculos en useMemo para unir el feed y las afimraciones
+  const {
+    totalItems,
+    averageCredibility,
+    verifiedCount,
+    falseCount, // misleadingCount
+    highCredibility,
+    lowCredibility
+  } = useMemo(() => {
+    const allItems = [...articles, ...(claims || [])];
+    const total = allItems.length;
 
-  const verifiedCount = articles.filter(a => a.category === 'real').length;
-  /* const fakeCount = articles.filter(a => a.category === 'fake').length; */
-  const misleadingCount = articles.filter(a => a.category === 'misleading').length;
+    // Promedio Global
+    const average = total > 0
+      ? Math.round(allItems.reduce((sum, item) => sum + (item.credibilityScore || 0), 0) / total)
+      : 0;
 
-  const highCredibility = articles.filter(a => a.credibilityScore >= 80).length;
-  const lowCredibility = articles.filter(a => a.credibilityScore < 50).length;
+    // "Verificadas": Exclusivamente las afirmaciones ingresadas por usuarios
+    const verified = (claims || []).length;
+    
+    // "Falsas": Filtramos de manera estricta por el campo classification === 'falsa
+    /*
+    const misleading = allItems.filter(
+      item => item.classification === 'engañosa' || item.classification === 'falsa'
+    ).length;
+    */
+   const falsas = allItems.filter(
+       item => item.classification === 'falsa'
+       ).length;
+       
+    // Alta y Baja Credibilidad
+    const highCred = allItems.filter(item => (item.credibilityScore || 0) >= 80).length;
+    const lowCred = allItems.filter(item => (item.credibilityScore || 0) < 50).length;
+
+    return {
+      totalItems: total,
+      averageCredibility: average,
+      verifiedCount: verified,
+      falseCount: falsas,
+      highCredibility: highCred,
+      lowCredibility: lowCred
+    };
+  }, [articles, claims]);
 
   const stats = [
     {
@@ -55,18 +90,11 @@ export function Statistics({ articles, isDarkMode }: StatisticsProps) {
       color: isDarkMode ? 'text-white' : 'text-black',
       bgColor: isDarkMode ? 'bg-gray-900' : 'bg-gray-100',
     },
-    /* {
-      icon: XCircle,
-      label: 'Falsas',
-      value: fakeCount,
-      color: isDarkMode ? 'text-gray-400' : 'text-gray-600',
-      bgColor: isDarkMode ? 'bg-gray-900' : 'bg-gray-100',
-    }, */
     {
       icon: AlertTriangle,
-      label: 'Engañosas',
-      value: misleadingCount,
-      color: isDarkMode ? 'text-gray-500' : 'text-gray-500',
+      label: 'Falsas',
+      value: falseCount,
+      color: isDarkMode ? 'text-gray-400' : 'text-gray-600',
       bgColor: isDarkMode ? 'bg-gray-900' : 'bg-gray-100',
     },
     {
@@ -171,12 +199,12 @@ export function Statistics({ articles, isDarkMode }: StatisticsProps) {
           ))}
         </div>
 
-        {totalArticles > 0 && (
+        {totalItems > 0 && (
           <div className={`mt-4 pt-4 border-t text-sm ${
             isDarkMode ? 'border-gray-800 text-gray-400' : 'border-gray-200 text-gray-600'
           }`}>
             <p>
-              Mostrando análisis de <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{totalArticles}</span> artículos.
+              Mostrando análisis global de <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{totalItems}</span> registros.
               {lowCredibility > 0 && (
                 <span className={isDarkMode ? 'text-gray-500' : 'text-gray-700'}>
                   {' '}⚠️ {lowCredibility} con baja credibilidad (&lt;50%)
