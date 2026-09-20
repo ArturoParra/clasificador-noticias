@@ -125,7 +125,11 @@ def serialize_news(news):
         "classification": news.get("classification", "none"),
         "credibilityScore": news.get("credibilityScore", 0),
         "summary": news.get("summary", ""),
-        "ai_report": news.get("ai_report", "")
+        "ai_report": news.get("ai_report", ""),
+        # adicion de nuevos campos para recuperacion de evidencia para el reporte del agente final
+        "claim": news.get("claim", ""),
+        "evidence_urls": news.get("evidence_urls", []),
+        "engine": news.get("engine", "")
     }
 
 async def fetch_and_save_top_news():
