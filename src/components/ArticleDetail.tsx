@@ -9,6 +9,34 @@ import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { toast } from 'sonner';
 
+// creacion de mini compilador de Markdown a HTML para el contenido de la noticia
+const formatTerminalText = (text: string | undefined, isDark: boolean) => {
+  if (!text) return { __html: 'El reporte detallado no está disponible.' };
+  
+  // Colores dinámicos para que combinen con la terminal
+  const headerColor = isDark ? 'text-emerald-300' : 'text-indigo-700';
+  const boldColor = isDark ? 'text-white' : 'text-black';
+  
+  let html = text
+    // Separacion de encabezados que a veces llegan pegados del LLM
+    // .replace(/(###\s)/g, '\n\n$1')
+    .replace(/\n*### /g, '\n\n### ') // Asegura que los encabezados tengan saltos de línea antes
+    // Se limpia cualquier salto de línea al inicio del texto para evitar espacios innecesarios
+    .replace(/^\n+/, '')
+    // Parseo de títulos (###)
+    .replace(/### (.*?)(?=\n|$)/g, `<span class="block text-lg font-bold mt-4 mb-2 ${headerColor}">$1</span>`)
+    // Parseo de negritas (**)
+    .replace(/\*\*(.*?)\*\*/g, `<strong class="font-bold ${boldColor}">$1</strong>`)
+    // Parseo de itálicas (*)
+    .replace(/\*(.*?)\*/g, `<em class="italic opacity-90">$1</em>`)
+    // Conversión de saltos de línea reales en saltos de HTML (<br/>)
+    .replace(/\n/g, '<br/>')
+    // Limpieza final de cualquier salto de línea al final del texto
+    .replace(/^(<br\/>)+/, '');
+    
+  return { __html: html };
+};
+
 export function ArticleDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -196,7 +224,8 @@ export function ArticleDetail() {
               {article.description}
             </p>
             
-            {/* 1. CAJA DINÁMICA DE FUENTES Y EVIDENCIA */}
+            {/* Caja dinámica de fuentes para la evidencia */}
+
             {/* Se muestra si la noticia tiene URL original, o si la afirmación tiene URL de evidencia */}
             {(article.url || (article.evidence_urls && article.evidence_urls.length > 0)) && (
               <div className={`mt-12 p-6 rounded-xl border ${
@@ -219,8 +248,8 @@ export function ArticleDetail() {
               </div>
             )}
 
-            {/* 2. TERMINAL DEL INVESTIGADOR HORIZONTAL */}
-            {/* Se muestra SOLAMENTE si existe un reporte de IA (ya sea de CrewAI o del Modelo Local) */}
+            {/* Terminal del investigador en disposición horizontal */}
+            {/* Se muestra solo si existe un reporte de IA (ya sea de CrewAI o del Modelo Local) */}
             {article.ai_report && (
               <div className={`mt-8 rounded-xl border shadow-sm overflow-hidden flex flex-col ${
                 isDarkMode ? 'bg-gray-950 border-gray-800' : 'bg-gray-50 border-gray-200'
@@ -231,11 +260,20 @@ export function ArticleDetail() {
                   <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
                   Terminal del Investigador
                 </div>
+                
+                <div 
+                  className={`p-6 sm:p-8 overflow-y-auto text-[15px] sm:text-base font-mono leading-loose tracking-wide ${
+                    isDarkMode ? 'bg-[#0a0f14] text-emerald-400/90' : 'bg-slate-50 text-slate-800'
+                  }`}
+                  dangerouslySetInnerHTML={formatTerminalText(article.ai_report, isDarkMode)}
+                />
+                {/*}
                 <div className={`p-6 overflow-y-auto text-base font-mono whitespace-pre-wrap leading-relaxed ${
                   isDarkMode ? 'text-green-400' : 'text-gray-800'
                 }`}>
                   {article.ai_report}
                 </div>
+                */}
               </div>
             )}
 

@@ -690,8 +690,10 @@ async def analyze_claim(request: ClaimRequest):
     claim_data =  {
         "id": f"claim-{uuid.uuid4()}",
         "claim": claim,
-        "title": f"Análisis: ¿{claim[:80]}?" if len(claim) > 80 else f"Análisis: ¿{claim}?",
-        "description": summary[:200] if summary else "Análisis completado por agentes de IA.",
+        "title": f"Análisis: ¿{claim}?",
+        # "title": f"Análisis: ¿{claim[:80]}?" if len(claim) > 80 else f"Análisis: ¿{claim}?",
+        "description": summary if summary else "Análisis completado por agentes de IA.",
+        # "description": summary[:200] if summary else "Análisis completado por agentes de IA.",
         "classification": verdict if verdict != "none" else "none",
         "credibilityScore": score,
         "summary": summary,
