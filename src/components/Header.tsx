@@ -1,4 +1,4 @@
-import { ShieldCheck, Sun, Moon, Bookmark, MessageSquare } from 'lucide-react';
+import { ShieldCheck, Sun, Moon, Bookmark, /*MessageSquare*/ } from 'lucide-react';
 import { Link } from 'react-router';
 import { VerifyBar } from './VerifyBar';
 import { useNews } from '../context/NewsContext';
