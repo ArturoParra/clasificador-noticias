@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, MessageSquare } from 'lucide-react';
 import type { NewsCategory, SearchFilters } from '../types/types';
+import { Link } from 'react-router';
 
 interface FeedSearchBarProps {
   onSearch: (filters: SearchFilters) => void;
@@ -32,26 +33,44 @@ export function FeedSearchBar({ onSearch, isDarkMode, selectedCategory, onCatego
           : 'bg-gradient-to-br from-gray-100 to-white border-gray-300'
       } overflow-hidden mb-6 mt-6`}
     >
-      {/* Credibility Category Filters */}
+      {/* Credibility Category Filters ana Verification Button */}
       <div className="px-2 sm:px-4 pt-3 sm:pt-4">
-        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          {credibilityCategories.map((category) => (
-            <button
-              key={category.value}
-              onClick={() => onCategoryChange(category.value)}
-              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap ${
-                selectedCategory === category.value
-                  ? isDarkMode
-                    ? 'bg-white text-black scale-105 shadow-lg'
-                    : 'bg-black text-white scale-105 shadow-lg'
-                  : isDarkMode
-                  ? 'bg-gray-900 text-gray-300 border border-gray-800 hover:bg-gray-800 hover:text-white hover:scale-105 hover:border-gray-700'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:text-black hover:scale-105 hover:border-gray-400'
-              } active:scale-95`}
-            >
-              {category.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          
+          {/* Pestañas (Todas, Verdaderas, etc.) */}
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+            {credibilityCategories.map((category) => (
+              <button
+                key={category.value}
+                onClick={() => onCategoryChange(category.value)}
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap ${
+                  selectedCategory === category.value
+                    ? isDarkMode
+                      ? 'bg-white text-black scale-105 shadow-lg'
+                      : 'bg-black text-white scale-105 shadow-lg'
+                    : isDarkMode
+                    ? 'bg-gray-900 text-gray-300 border border-gray-800 hover:bg-gray-800 hover:text-white hover:scale-105 hover:border-gray-700'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:text-black hover:scale-105 hover:border-gray-400'
+                } active:scale-95`}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Botón de Verificaciones (Alineado a la derecha) */}
+          <Link to="/afirmaciones">
+            <div className={`relative px-4 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-2 shadow-sm ${
+              isDarkMode
+                ? 'bg-indigo-900/30 border border-indigo-800 hover:bg-indigo-800/80 text-indigo-300 hover:text-indigo-100'
+                : 'bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700'
+            }`}>
+              <MessageSquare className="size-4" />
+              <span className="text-sm font-bold">
+                Verificaciones
+              </span>
+            </div>
+          </Link>
         </div>
       </div>
 
