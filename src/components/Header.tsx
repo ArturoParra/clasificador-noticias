@@ -37,6 +37,7 @@ export function Header({ isDarkMode, onToggleTheme, onExternalArticleAnalyzed, o
           </Link>
           
           <div className="flex items-center gap-2">
+            {/*}
             <Link to="/afirmaciones">
               <div className={`relative px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-2 ${
                 isDarkMode
@@ -49,6 +50,7 @@ export function Header({ isDarkMode, onToggleTheme, onExternalArticleAnalyzed, o
                 </span>
               </div>
             </Link>
+            */}
 
             {/* Favorites Counter */}
             <Link to="/saved">
