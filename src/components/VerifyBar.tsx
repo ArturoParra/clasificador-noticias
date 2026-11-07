@@ -63,9 +63,15 @@ export function VerifyBar({ isDarkMode, onExternalArticleAnalyzed, onVerifyClaim
         if (onExternalArticleAnalyzed) {
           onExternalArticleAnalyzed(externalArticle);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error analizando la URL externa:', error);
-        alert("Falla de conexión con el servidor de análisis.");
+        // Se extrae el mensaje detail de Axios si es un error 400
+        if (error.response && error.response.status === 400 && error.response.data && error.response.data.detail) {
+            alert(error.response.data.detail);
+        } else {
+            // Fallback genérico solo para caídas del servidor (500, 502, 503)
+            alert("Falla de conexión con el servidor de análisis.");
+        }
       } finally {
         setIsAnalyzing(false);
       }
