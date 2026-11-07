@@ -387,6 +387,7 @@ async def get_claims():
     # o crear una función pequeña serialize_claim si difieren mucho.
     return [serialize_news(item) for item in items]
 
+# Endpoint para analizar una noticia específica por su ID
 @app.post("/api/news/{news_id}/analyze")
 async def analyze_news_endpoint(news_id: str):
     """
@@ -503,68 +504,86 @@ class ClaimRequest(BaseModel):
 @app.post("/api/analyze-external")
 async def analyze_external_url(request: URLRequest):
     print(f"Analizando URL externa: {request.url}")
+    
+    # Valores por defecto en caso de que la extracción falle pero queramos mantener variables estables
+    parsed_uri = urlparse(request.url)
+    source_name = parsed_uri.netloc.replace('www.', '')
+    article_date = "Fecha desconocida"
+    title = "Noticia externa sin titulo"
+    body = ""
+
     try:
-        # scrapping de la pagina para extraer el texto
-        # para dicho scrapping, se enmascara el user-agent para evitar bloqueos básicos de algunos sitios web
-        # esto definiendo las siguientes cabeceras
+        # Cabeceras robustas: simulamos una navegación real desde Chrome para evadir Cloudflare y firewalls
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Language": "es-MX,es;q=0.9,en;q=0.8"
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "es-MX,es;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Cache-Control": "max-age=0"
         }
 
-        # pasamos las cabeceras a la sesion de aiohttp para el scrapping
-        async with aiohttp.ClientSession(headers=headers) as session:
+        # Agregamos un timeout para evitar que Render congele el hilo si el sitio nos deja en un "Loading..." infinito
+        timeout = aiohttp.ClientTimeout(total=10)
+
+        async with aiohttp.ClientSession(headers=headers, timeout=timeout) as session:
             async with session.get(request.url) as response:
-                # Verificamos que el sitio nos haya dejado entrar (Código 200)
+                # Interceptamos bloqueos anti-bots conocidos antes de que aiohttp lance un error genérico
+                if response.status in (401, 403, 429, 503):
+                    raise Exception(f"Protección anti-bots del periódico detectada (HTTP {response.status}).")
+                
                 response.raise_for_status()
 
                 html = await response.text()
                 soup = BeautifulSoup(html, 'html.parser')
 
-                # Extraccion de fuente y fecha
-                # Se captura el nombre de la fuente con dos planes de extracción para maximizar la compatibilidad con diferentes sitios:
+                # Extraccion de fuente
                 og_site_name = soup.find('meta', property='og:site_name')
                 if og_site_name and og_site_name.get('content'):
                     source_name = og_site_name['content']
-                else:
-                    # Si no hay etiqueta, extraemos el dominio (ej. "elfinanciero.com.mx")
-                    parsed_uri = urlparse(request.url)
-                    source_name = parsed_uri.netloc.replace('www.', '')
 
-                # Captura de la fecha de publicación (Date)
-                article_date = "Fecha desconocida"
-                # Buscamos en las etiquetas meta más utilizadas por el periodismo
+                # Extraccion de fecha
                 meta_date = soup.find('meta', property='article:published_time') or \
                             soup.find('meta', attrs={'name': 'pubdate'}) or \
                             soup.find('meta', itemprop='datePublished')
                             
                 if meta_date and meta_date.get('content'):
-                    # Recortamos la cadena para obtener solo AAAA-MM-DD (ignoramos la hora)
                     article_date = meta_date['content'].split('T')[0]
                 else:
-                    # Busqueda de una etiqueta <time> visible
                     time_tag = soup.find('time')
                     if time_tag and time_tag.has_attr('datetime'):
                         article_date = time_tag['datetime'].split('T')[0]
 
-                # Extraccion del titulo y los primeros 5 parrafos
-                title = soup.title.string if soup.title else "Noticia externa sin titulo"
+                # Extraccion de titulo y parrafos
+                if soup.title and soup.title.string:
+                    title = soup.title.string.strip()
+                    
                 all_paragraphs = soup.find_all('p')
-
-                # Filtramos solo guardando los que tengan texto real (más de 40 caracteres)
                 valid_paragraphs = [
                     p.get_text(strip=True) 
                     for p in all_paragraphs 
                     if len(p.get_text(strip=True)) > 40
                 ]
                 
-                # tomamos los primeros 5 parrafos validos y los unimos
-                body = " ".join(valid_paragraphs[:5]) # Limitar a los primeros 5 parrafos para no saturar la IA
+                body = " ".join(valid_paragraphs[:5])
 
-                text_to_analyze = f"{title}. {body}"
+        if not body:
+            raise Exception("El sitio cargó, pero no se encontró texto periodístico en formato de párrafos (<p>).")
+
+        text_to_analyze = f"{title}. {body}"
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al extraer texto de la URL: {str(e)}")
+        # CAMBIO CLAVE: Cambiamos status_code=500 a 400. 
+        # Esto le indica al frontend que fue un problema de la URL solicitada, no un colapso del servidor.
+        raise HTTPException(
+            status_code=400, 
+            detail=f"No se pudo extraer el texto de la URL: {str(e)}. Intenta pegando el texto de la noticia directamente."
+        )
 
     # llamado a la arquitectura de clasificacion hibrida sin persistencia en DB
     real_model = modelo
@@ -581,6 +600,7 @@ async def analyze_external_url(request: URLRequest):
         has_credits = await verify_tavily_credits()
         if not has_credits:
             raise Exception("Tavily API sin créditos. Abortando IA para evitar alucinaciones.")
+        
         print("Enviando URL a los agentes de IA...")
         raw_result = await execute_analysis(text_to_analyze)
         
@@ -590,7 +610,6 @@ async def analyze_external_url(request: URLRequest):
         classification = str(ai_result.get("verdict", "none")).lower()
         final_score = ai_result.get("score", 0)
         used_engine = "IA_Agentes"
-        # linea de respaldo ante el veredicto por probabilidad
         ai_report = ai_result.get("report", "Reporte detallado no disponible.")
 
     except Exception as e:
@@ -604,7 +623,6 @@ async def analyze_external_url(request: URLRequest):
         
         proba = real_model.predict_proba(input_data)[0]
         
-        # logica para identificar correctamente las clases y sus probabilidades
         if hasattr(real_model, "classes_"):
             clases = list(real_model.classes_)
             indice_clase_falsa = clases.index(1) if 1 in clases else 1
@@ -617,43 +635,42 @@ async def analyze_external_url(request: URLRequest):
         
         final_score = round(float(true_prob) * 100)
         classification = "falsa" if false_prob >= 0.5 else "verdadera"
-        # linea de respaldo ante el veredicto por probabilidad
-        ai_report = """### Análisis de emergencia mediante modelo predictivo matemático local.
+        
+        ai_report = f"""### Análisis de emergencia mediante modelo predictivo matemático local.
 
-        **Veredicto Final:** {classification.capitalize()}
-        **Índice de Confianza:** {final_score}%
+**Veredicto Final:** {classification.capitalize()}
+**Índice de Confianza:** {final_score}%
 
-        **1. Análisis Estructural**
-        Debido a la saturación de los servidores de IA, el sistema ha activado el motor predictivo local. El texto extraído de la URL fue vectorizado y analizado.
+**1. Análisis Estructural**
+Debido a la saturación de los servidores de IA, el sistema ha activado el motor predictivo local. El texto extraído de la URL fue vectorizado y analizado.
 
-        **2. Evaluación de Patrones**
-        * **Distribución de Vocabulario:** El modelo detectó una probabilidad de falsedad del {round(float(false_prob) * 100, 2)}%.
-        * **Estructura:** Los patrones lingüísticos coinciden con la clasificación asignada.
+**2. Evaluación de Patrones**
+* **Distribución de Vocabulario:** El modelo detectó una probabilidad de falsedad del {round(float(false_prob) * 100, 2)}%.
+* **Estructura:** Los patrones lingüísticos coinciden con la clasificación asignada.
 
-        **3. Conclusión**
-        Mediante un cálculo estadístico sobre el texto puro, el sistema cataloga la URL externa como **{classification.capitalize()}**."""
+**3. Conclusión**
+Mediante un cálculo estadístico sobre el texto puro, el sistema cataloga la URL externa como **{classification.capitalize()}**."""
 
     fecha_analisis_exacta = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # Se devuelve la respuesta con las claves exactas que espera el frontend
     external_id = f"external-{uuid.uuid4()}"
+    
     return {
-        "id": external_id,             # Cambiado de _id a id
-        "_id": external_id,            # Por si MongoDB lo requiere internamente
+        "id": external_id,
+        "_id": external_id,
         "title": title,
-        "description": body[:150] + "...",
-        "content": body,               # Agregado para la vista de detalles
-        "summary": body[:150] + "...", # Resumen simple basado por si NewsGrid lo necesita
+        "description": body[:150] + "..." if body else "Sin descripción",
+        "content": body,
+        "summary": body[:150] + "..." if body else "Sin resumen",
         "classification": classification,
         "credibilityScore": final_score,
         "engine": used_engine,
         "image": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=800",
         "url": request.url,
-        "source": source_name,    # Agregado para el Badge
-        "date": fecha_analisis_exacta,          # Agregado para el subtítulo
-        "publish_date": article_date,  # Por compatibilidad con el frontend que espera publish_date
-        "category": "general", # critico para los filtros del frontend
-        "ai_report": ai_report # nueva linea en la DB
+        "source": source_name,
+        "date": fecha_analisis_exacta,
+        "publish_date": article_date,
+        "category": "general",
+        "ai_report": ai_report
     }
 
 # endpoint para analisis de afirmaciones (ideas/claims)
