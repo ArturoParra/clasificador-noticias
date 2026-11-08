@@ -38,7 +38,7 @@ export function SavedArticles() {
           >
             <Link to="/feed" className="flex items-center gap-2">
               <ArrowLeft className="size-4" />
-              Volver al Feed
+              Volver al feed de noticias
             </Link>
           </Button>
         </div>
