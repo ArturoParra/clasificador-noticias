@@ -115,16 +115,17 @@ export function VerifyBar({ isDarkMode, onExternalArticleAnalyzed, onVerifyClaim
               }`} />
               <input
                 type="text"
-                placeholder="Ingrese una URL externa o afirmación para verificar con IA..."
+                placeholder="Ingrese el texto de alguna noticia, una URL o afirmación para verificar con IA si es verdadera..."
                 value={verifyText}
                 onChange={(e) => setVerifyText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
-                className={`w-full pl-9 sm:pl-10 pr-10 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-300 text-sm sm:text-base ${
+                className={`w-full pl-9 sm:pl-10 pr-10 py-2 sm:py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base ${
                   isDarkMode
-                    ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500 focus:ring-white focus:border-white'
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-black focus:border-black'
+                    ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500'
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
                 }`}
               />
+          
               {verifyText.trim() && (
                 <button
                   type="button"

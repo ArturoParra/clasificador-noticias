@@ -101,7 +101,9 @@ export function Statistics({ isDarkMode, onNewVerification }: StatisticsProps) {
       <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
         isCollapsed ? 'max-h-0 opacity-0' : 'max-h-[1000px] opacity-100'
       }`}>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        
+        {/* Se agrega p-2 y -m-2 para crear una "zona segura" que evita que el overflow-hidden recorte los botones al hacer hover */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-2 -m-2">
           
           {/* Tarjeta 1: Credibilidad Promedio */}
           <div className={`p-4 rounded-lg border flex flex-col items-center text-center gap-2 ${
@@ -136,7 +138,7 @@ export function Statistics({ isDarkMode, onNewVerification }: StatisticsProps) {
           {/* Tarjeta 3: Botón Historial */}
           <button 
             onClick={() => navigate('/afirmaciones')}
-            className={`p-4 rounded-lg border flex flex-col items-center justify-center text-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer col-span-2 md:col-span-1 ${
+            className={`p-4 rounded-lg border flex flex-col items-center justify-center text-center gap-2 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg active:translate-y-0 cursor-pointer col-span-2 md:col-span-1 ${
               isDarkMode 
                 ? 'bg-gray-900 border-gray-800 hover:border-gray-600 text-gray-400 hover:text-white' 
                 : 'bg-gray-100 border-gray-200 hover:border-gray-400 text-gray-600 hover:text-black'
@@ -148,13 +150,22 @@ export function Statistics({ isDarkMode, onNewVerification }: StatisticsProps) {
             </div>
           </button>
 
-          {/* Tarjeta 4: Botón Nueva Verificación (Color Azul) */}
+          {/* Tarjeta 4: Botón Nueva Verificación (Garantizado con estilos en línea) */}
           <button 
             onClick={onNewVerification}
-            className="p-4 rounded-lg border-none flex flex-col items-center justify-center text-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/40 group col-span-2 md:col-span-3 lg:col-span-1"
+            style={{ 
+              borderWidth: '7px', 
+              borderStyle: 'solid', // estilo difuminado
+              borderColor: '#0565ff' // Código hexadecimal exacto de blue-500
+            }}
+            className={`p-4 rounded-lg flex flex-col items-center justify-center text-center gap-2 transition-all duration-300 hover:-translate-y-1 active:translate-y-0 cursor-pointer group col-span-2 md:col-span-3 lg:col-span-1 shadow-[0_0_10px_rgba(59,130,246,0.2)] hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+              isDarkMode 
+                ? 'bg-gray-900 hover:bg-gray-800 text-gray-400 hover:text-white focus:ring-offset-gray-900' 
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-black focus:ring-offset-white'
+            }`}
           >
-            <Plus className="size-6 text-white group-hover:rotate-90 transition-transform duration-300" />
-            <div className="text-sm font-bold text-white">
+            <Plus className="size-6 text-blue-500 group-hover:text-blue-400 group-hover:rotate-90 transition-all duration-300" />
+            <div className="text-sm font-medium">
               Realizar nueva verificación
             </div>
           </button>
