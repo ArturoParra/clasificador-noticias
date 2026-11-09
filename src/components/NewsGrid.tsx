@@ -101,7 +101,24 @@ export function NewsGrid({ selectedCategory, isDarkMode, searchFilters, showOnly
 
   return (
     <>
-      {showStatistics && <Statistics /*articles={sortedNews}*/ isDarkMode={isDarkMode} />}
+      {showStatistics && (
+        <Statistics 
+          isDarkMode={isDarkMode}
+          onViewHistory={() => {
+            // Limpia los filtros para mostrar todo el historial cronológico
+            if (onCategoryChange) onCategoryChange('all');
+            if (onSearch) onSearch({ text: '' });
+          }}
+          onNewVerification={() => {
+            // Navega suavemente hasta arriba y selecciona la barra de búsqueda
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => {
+              const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+              if (input) input.focus();
+            }, 500);
+          }}
+        />
+      )}
       
       {showStatistics && onSearch && onCategoryChange && (
         <FeedSearchBar 
